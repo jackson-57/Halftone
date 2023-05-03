@@ -2,8 +2,8 @@
 #include "opusfile.h"
 #include "speex/speex_resampler.h"
 
-//#define OPUS_BUFFER_SIZE 11520
-#define OPUS_BUFFER_SIZE 1023
+#define OPUS_BUFFER_SIZE 11520
+#define SPEEX_BUFFER_SIZE 1024
 
 static PlaydateAPI* pd = NULL;
 
@@ -21,13 +21,58 @@ typedef struct {
     SoundSource *source;
     OggOpusFile *of;
     SpeexResamplerState *spx;
-    Buffer *opus_buf;
+    Buffer *op_buf;
+    Buffer *spx_buf;
 } AudioState;
 
 OpusFileCallbacks cb;
-SpeexResamplerState* spx;
 
-int get_opus_samples(Buffer *buffer, int len, OggOpusFile *of)
+int get_op_samples(Buffer *buffer, int len, OggOpusFile *of)
+{
+    // todo: check if length fits in buffer
+    // todo: memcpy or memmove?
+    // refill if samples in buffer is less than requested amount
+    if (len > buffer->count)
+    {
+        // move remaining data to beginning
+        // destination, source
+        memcpy(buffer->buf, buffer->buf + buffer->pos, buffer->size);
+        buffer->pos = 0;
+
+        // get samples
+        // todo: error/zero handling, properly shut down
+        do {
+            int offset = buffer->pos + buffer->count;
+            int result = op_read_stereo(of, buffer->buf + offset, buffer->size - offset);
+            if (result > 0)
+            {
+                buffer->count += result * 2;
+            }
+            else
+            {
+                break;
+            }
+        }
+        while (len > buffer->count);
+    }
+
+    // return
+    if (buffer->count > len)
+    {
+        buffer->count -= len;
+        buffer->pos += len;
+        return len;
+    }
+    else
+    {
+        int temp = buffer->count;
+        buffer->count = 0;
+        buffer->pos += temp;
+        return temp;
+    }
+}
+
+int get_spx_samples(Buffer *buffer, int len, SpeexResamplerState *spx, Buffer *op_buf, OggOpusFile *of)
 {
     // todo: check if length fits in buffer
     // refill if samples in buffer is less than requested amount
@@ -41,11 +86,22 @@ int get_opus_samples(Buffer *buffer, int len, OggOpusFile *of)
         // get samples
         // todo: error/zero handling
         do {
+//            int result = op_read_stereo(of, buffer->buf + offset, buffer->size - offset);
             int offset = buffer->pos + buffer->count;
-            int result = op_read_stereo(of, buffer->buf + offset, buffer->size - offset);
+            int available = buffer->size - offset;
+
+            // get opus samples
+            int in_res = get_op_samples(op_buf, available, of);
+            int16_t *input = op_buf->buf + op_buf->pos - in_res;
+
+            uint32_t in_len = in_res / 2;
+            uint32_t result = available / 2;
+            speex_resampler_process_interleaved_int(spx, input, &in_len, buffer->buf + offset, &result);
+
+
             if (result > 0)
             {
-                buffer->count += result * 2;
+                buffer->count += (int)result * 2;
             }
             else
             {
@@ -81,9 +137,9 @@ int AudioHandler(void *context, int16_t *left, int16_t *right, int len) {
 
     int target = len * 2;
 
-    // get opus samples
-    int samples = get_opus_samples(state->opus_buf, target, state->of);
-    int16_t *buffer = state->opus_buf->buf + state->opus_buf->pos - samples;
+    // get samples
+    int samples = get_spx_samples(state->spx_buf, target, state->spx, state->op_buf, state->of);
+    int16_t *buffer = state->spx_buf->buf + state->spx_buf->pos - samples;
 
 //    // if no samples read or an error, stop after processing
 //    if (result <= 0) {
@@ -96,23 +152,6 @@ int AudioHandler(void *context, int16_t *left, int16_t *right, int len) {
 //        state->pd->sound->removeSource(state->source);
 //        state->pd->system->realloc(state, 0);
 //        break;
-//    }
-
-//    // Resample
-//    int half_read = total_read / 2;
-//    int16_t resample_buffer[len * 2];
-//    uint32_t in_len = half_read;
-//    uint32_t out_len = len;
-//    speex_resampler_process_interleaved_int(state->spx, buffer, &in_len, resample_buffer, &out_len);
-
-//    // Stop if resampling was unsuccessful
-//    if (out_len != half_read) {
-//        pd->system->logToConsole("Speex error: expected %i samples but only returned %i samples", total_read, out_len);
-//
-//        op_free(state->of);
-//        state->pd->sound->removeSource(state->source);
-//        state->pd->system->realloc(state, 0);
-//        return 0;
 //    }
 
     // https://stackoverflow.com/q/14567786
@@ -152,14 +191,28 @@ static int play_music_demo(lua_State* L)
         return 0;
     }
 
+    // setup resampler
+    int speex_err;
+    SpeexResamplerState* spx = speex_resampler_init(2, 48000, 44100, 5, &speex_err);
+    if (speex_err != 0)
+    {
+        pd->system->logToConsole("Speex error while initializing: %i", speex_err);
+    }
+
     // create opus buffer
     Buffer *op_buf = pd->system->realloc(NULL, sizeof(Buffer));
 //    int16_t buf[OPUS_BUFFER_SIZE];
-    int16_t *buf = pd->system->realloc(NULL, OPUS_BUFFER_SIZE * sizeof(Buffer));
-    op_buf->buf = buf;
+    op_buf->buf = pd->system->realloc(NULL, OPUS_BUFFER_SIZE * sizeof(Buffer));
     op_buf->size = OPUS_BUFFER_SIZE;
     op_buf->count = 0;
     op_buf->pos = 0;
+
+    // create speex buffer
+    Buffer *spx_buf = pd->system->realloc(NULL, sizeof(Buffer));
+    spx_buf->buf = pd->system->realloc(NULL, SPEEX_BUFFER_SIZE * sizeof(Buffer));
+    spx_buf->size = SPEEX_BUFFER_SIZE;
+    spx_buf->count = 0;
+    spx_buf->pos = 0;
 
     // Create a new audio source with a state context
     AudioState *state = pd->system->realloc(NULL, sizeof(AudioState));
@@ -167,7 +220,8 @@ static int play_music_demo(lua_State* L)
     state->source = pd->sound->addSource(&AudioHandler, state, 1);
     state->of     = of;
     state->spx    = spx;
-    state->opus_buf = op_buf;
+    state->op_buf = op_buf;
+    state->spx_buf = spx_buf;
 
     return 1;
 }
@@ -198,14 +252,6 @@ int eventHandler(PlaydateAPI* playdate, PDSystemEvent event, uint32_t arg)
         cb.seek = (op_seek_func) pd->file->seek;
         cb.tell = (op_tell_func) pd->file->tell;
         cb.close = pd->file->close;
-
-        // setup resampler
-        int speex_err;
-        spx = speex_resampler_init(2, 48000, 41000, 5, &speex_err);
-        if (speex_err != 0)
-        {
-            pd->system->logToConsole("Speex error while initializing: %i", speex_err);
-        }
     }
 
     return 0;
