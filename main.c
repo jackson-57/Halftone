@@ -183,8 +183,8 @@ static int play_music_demo(lua_State* L)
         pd->system->logToConsole("Could not open file.");
         return 0;
     }
-    int *err = NULL;
-    OggOpusFile* of = op_open_callbacks(file, &cb, NULL, 0, err);
+    int err;
+    OggOpusFile* of = op_open_callbacks(file, &cb, NULL, 0, &err);
     if (err != 0)
     {
         pd->system->logToConsole("Opus error while opening: %i", err);
