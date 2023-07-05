@@ -31,9 +31,9 @@ set(PLAYDATE_GAME_DEVICE pdaudio_DEVICE)
 project(${PLAYDATE_GAME_NAME} C ASM)
 
 if (TOOLCHAIN STREQUAL "armgcc")
-	add_executable(${PLAYDATE_GAME_DEVICE} main.c)
+	add_executable(${PLAYDATE_GAME_DEVICE} main.c image.c)
 else()
-	add_library(${PLAYDATE_GAME_NAME} SHARED main.c)
+	add_library(${PLAYDATE_GAME_NAME} SHARED main.c image.c)
 endif()
 
 include(${SDK}/C_API/buildsupport/playdate_game.cmake)
@@ -45,4 +45,8 @@ add_subdirectory(lib/opus)
 add_subdirectory(lib/ogg)
 add_subdirectory(lib/opusfile)
 add_subdirectory(lib/speexdsp)
-target_link_libraries(${PLAYDATE_GAME_NAME} opusfile speexdsp)
+
+add_subdirectory(lib/stb)
+target_compile_definitions(stb PRIVATE STBI_NO_STDIO=, STBI_ONLY_JPEG=, STBI_ONLY_PNG=, STBI_ONLY_GIF=)
+
+target_link_libraries(${PLAYDATE_GAME_NAME} opusfile speexdsp stb)

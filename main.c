@@ -1,6 +1,14 @@
 #include "pd_api.h"
 #include "opusfile.h"
 #include "speex/speex_resampler.h"
+#include "image.h"
+#include <stb_image.h>
+#include <stb_image_resize.h>
+
+// TODO: malloc vs pd->system->realloc?
+
+int const COVER_SIZE = 240;
+char DEBUG_PATH[] = "C418 - Excursions/11 - C418 - Nest.opus";
 
 #define OPUS_BUFFER_SIZE 11520
 #define SPEEX_BUFFER_SIZE 1024
@@ -26,6 +34,8 @@ typedef struct {
 } AudioState;
 
 OpusFileCallbacks cb;
+
+void index_file(char* path);
 
 int get_op_samples(Buffer *buffer, int len, OggOpusFile *of)
 {
@@ -145,7 +155,7 @@ int AudioHandler(void *context, int16_t *left, int16_t *right, int len) {
 //    if (result <= 0) {
 //        if (result < 0)
 //        {
-//            pd->system->logToConsole("Opus error while decoding: %i", result);
+//            pd->system->error("Opus error while decoding: %i", result);
 //        }
 //
 //        op_free(state->of);
@@ -176,18 +186,21 @@ static int play_music_demo(lua_State* L)
     // Create folder
     pd->file->mkdir("");
 
+    // Test index
+    index_file(DEBUG_PATH);
+
     // Open file
-    SDFile *file = pd->file->open("wsf.opus", kFileReadData);
+    SDFile *file = pd->file->open(DEBUG_PATH, kFileReadData);
     if (file == NULL)
     {
-        pd->system->logToConsole("Could not open file.");
+        pd->system->error("Could not open file.");
         return 0;
     }
     int err;
     OggOpusFile* of = op_open_callbacks(file, &cb, NULL, 0, &err);
     if (err != 0)
     {
-        pd->system->logToConsole("Opus error while opening: %i", err);
+        pd->system->error("Opus error while opening: %i", err);
         return 0;
     }
 
@@ -196,7 +209,8 @@ static int play_music_demo(lua_State* L)
     SpeexResamplerState* spx = speex_resampler_init(2, 48000, 44100, 5, &speex_err);
     if (speex_err != 0)
     {
-        pd->system->logToConsole("Speex error while initializing: %i", speex_err);
+        pd->system->error("Speex error while initializing: %i", speex_err);
+        return 0;
     }
 
     // create opus buffer
@@ -224,6 +238,97 @@ static int play_music_demo(lua_State* L)
     state->spx_buf = spx_buf;
 
     return 1;
+}
+
+void index_file(char* path)
+{
+    // Open file
+    SDFile *file = pd->file->open(path, kFileReadData);
+    if (file == NULL)
+    {
+        pd->system->error("Could not open file (%s)", path);
+        return;
+    }
+    int err;
+    OggOpusFile* of = op_open_callbacks(file, &cb, NULL, 0, &err);
+    if (err != 0)
+    {
+        pd->system->error("Opus error while opening to index: %i (%s)", err, path);
+        pd->file->close(file);
+        return;
+    }
+
+    const OpusTags* opusTags = op_tags(of, -1);
+    if (opusTags == NULL)
+    {
+        // TODO: Special case for indexing
+        op_free(of);
+        return;
+    }
+
+    // TODO: Index tags. Free op_tags?
+
+    // TODO: Check if album art is needed
+    const char *pictureBlock = opus_tags_query(opusTags, "METADATA_BLOCK_PICTURE", 0);
+    if (pictureBlock == NULL)
+    {
+        op_free(of);
+        return;
+    }
+    OpusPictureTag pictureTag;
+    err = opus_picture_tag_parse(&pictureTag, pictureBlock);
+    if (err != 0)
+    {
+        pd->system->error("Error parsing image data: %i (%s)", err, path);
+        op_free(of);
+        return;
+    }
+
+    if (pictureTag.format != OP_PIC_FORMAT_JPEG && pictureTag.format != OP_PIC_FORMAT_PNG && pictureTag.format != OP_PIC_FORMAT_GIF)
+    {
+        pd->system->logToConsole("Unknown image type (%s)", path);
+        opus_picture_tag_clear(&pictureTag);
+        op_free(of);
+        return;
+    }
+
+    int x, y, channels;
+    unsigned char *originalImage = stbi_load_from_memory(pictureTag.data, (int)pictureTag.data_length, &x, &y, &channels, 1);
+    opus_picture_tag_clear(&pictureTag);
+    if (originalImage == NULL)
+    {
+        pd->system->error("Error reading image data: %s (%s)", stbi_failure_reason(), path);
+        op_free(of);
+        return;
+    }
+
+    unsigned char* newImage = pd->system->realloc(NULL, sizeof(unsigned char) * COVER_SIZE * COVER_SIZE);
+    if (newImage == NULL)
+    {
+        pd->system->error("Error allocating image memory");
+        stbi_image_free(originalImage);
+        op_free(of);
+        return;
+    }
+
+    err = stbir_resize_uint8(originalImage, x, y, 0, newImage, COVER_SIZE, COVER_SIZE, 0, 1);
+    stbi_image_free(originalImage);
+    if (err == 0)
+    {
+        pd->system->error("Error resizing image");
+        pd->system->realloc(newImage, 0);
+        op_free(of);
+        return;
+    }
+
+    floyd_steinberg_dither(newImage, COVER_SIZE, COVER_SIZE);
+    LCDBitmap *bitmap = pack_bitmap(pd, newImage, COVER_SIZE, COVER_SIZE);
+    pd->system->realloc(newImage, 0);
+
+    pd->graphics->drawBitmap(bitmap, 160, 0, kBitmapUnflipped);
+    pd->graphics->freeBitmap(bitmap);
+
+    op_free(of);
 }
 
 static int hello_world(lua_State* L)
