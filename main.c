@@ -1,19 +1,17 @@
-#include "pd_api.h"
-#include "opusfile.h"
-#include "speex/speex_resampler.h"
-#include "image.h"
-#include <stb_image.h>
-#include <stb_image_resize.h>
+#include <pd_api.h>
+#include <opusfile.h>
+#include <speex/speex_resampler.h>
+#include "index.h"
+#include "audio.h"
 
 // TODO: malloc vs pd->system->realloc?
+// TODO: consistent formatting/naming
 
-int const COVER_SIZE = 240;
-char DEBUG_PATH[] = "C418 - Excursions/11 - C418 - Nest.opus";
+PlaydateAPI* pd;
+OpusFileCallbacks cb;
 
 #define OPUS_BUFFER_SIZE 11520
 #define SPEEX_BUFFER_SIZE 1024
-
-static PlaydateAPI* pd = NULL;
 
 // Buffer struct
 typedef struct {
@@ -33,11 +31,9 @@ typedef struct {
     Buffer *spx_buf;
 } AudioState;
 
-OpusFileCallbacks cb;
+typedef int (*refill_buffer)(Buffer*, AudioState*, int);
 
-void index_file(char* path);
-
-int get_op_samples(Buffer *buffer, int len, OggOpusFile *of)
+int get_buffered_samples(Buffer *buffer, int len, AudioState *state, refill_buffer refill)
 {
     // todo: check if length fits in buffer
     // todo: memcpy or memmove?
@@ -53,7 +49,9 @@ int get_op_samples(Buffer *buffer, int len, OggOpusFile *of)
         // todo: error/zero handling, properly shut down
         do {
             int offset = buffer->pos + buffer->count;
-            int result = op_read_stereo(of, buffer->buf + offset, buffer->size - offset);
+
+            int result = refill(buffer, state, offset);
+
             if (result > 0)
             {
                 buffer->count += result * 2;
@@ -82,59 +80,23 @@ int get_op_samples(Buffer *buffer, int len, OggOpusFile *of)
     }
 }
 
-int get_spx_samples(Buffer *buffer, int len, SpeexResamplerState *spx, Buffer *op_buf, OggOpusFile *of)
+int refill_opus_buffer(Buffer *buffer, AudioState *state, int offset)
 {
-    // todo: check if length fits in buffer
-    // refill if samples in buffer is less than requested amount
-    if (len > buffer->count)
-    {
-        // move remaining data to beginning
-        // destination, source
-        memcpy(buffer->buf, buffer->buf + buffer->pos, buffer->size);
-        buffer->pos = 0;
+    return op_read_stereo(state->of, buffer->buf + offset, buffer->size - offset);
+}
 
-        // get samples
-        // todo: error/zero handling
-        do {
-//            int result = op_read_stereo(of, buffer->buf + offset, buffer->size - offset);
-            int offset = buffer->pos + buffer->count;
-            int available = buffer->size - offset;
+int refill_speex_buffer(Buffer *buffer, AudioState *state, int offset)
+{
+    int available = buffer->size - offset;
 
-            // get opus samples
-            int in_res = get_op_samples(op_buf, available, of);
-            int16_t *input = op_buf->buf + op_buf->pos - in_res;
+    // get opus samples
+    int in_res = get_buffered_samples(state->op_buf, available, state, refill_opus_buffer);
+    int16_t *input = state->op_buf->buf + state->op_buf->pos - in_res;
 
-            uint32_t in_len = in_res / 2;
-            uint32_t result = available / 2;
-            speex_resampler_process_interleaved_int(spx, input, &in_len, buffer->buf + offset, &result);
-
-
-            if (result > 0)
-            {
-                buffer->count += (int)result * 2;
-            }
-            else
-            {
-                break;
-            }
-        }
-        while (len > buffer->count);
-    }
-
-    // return
-    if (buffer->count > len)
-    {
-        buffer->count -= len;
-        buffer->pos += len;
-        return len;
-    }
-    else
-    {
-        int temp = buffer->count;
-        buffer->count = 0;
-        buffer->pos += temp;
-        return temp;
-    }
+    uint32_t in_len = in_res / 2;
+    uint32_t result = available / 2;
+    speex_resampler_process_interleaved_int(state->spx, input, &in_len, buffer->buf + offset, &result);
+    return (int)result;
 }
 
 // Audio callback routine
@@ -148,7 +110,7 @@ int AudioHandler(void *context, int16_t *left, int16_t *right, int len) {
     int target = len * 2;
 
     // get samples
-    int samples = get_spx_samples(state->spx_buf, target, state->spx, state->op_buf, state->of);
+    int samples = get_buffered_samples(state->spx_buf, target, state, refill_speex_buffer);
     int16_t *buffer = state->spx_buf->buf + state->spx_buf->pos - samples;
 
 //    // if no samples read or an error, stop after processing
@@ -180,17 +142,13 @@ int AudioHandler(void *context, int16_t *left, int16_t *right, int len) {
 
 static int play_music_demo(lua_State* L)
 {
-    // I don't know
-    pd->lua->pushNil();
+    const char *path = pd->lua->getArgString(1);
 
     // Create folder
     pd->file->mkdir("");
 
-    // Test index
-    index_file(DEBUG_PATH);
-
     // Open file
-    SDFile *file = pd->file->open(DEBUG_PATH, kFileReadData);
+    SDFile *file = pd->file->open(path, kFileReadData);
     if (file == NULL)
     {
         pd->system->error("Could not open file.");
@@ -206,7 +164,7 @@ static int play_music_demo(lua_State* L)
 
     // setup resampler
     int speex_err;
-    SpeexResamplerState* spx = speex_resampler_init(2, 48000, 44100, 5, &speex_err);
+    SpeexResamplerState* spx = speex_resampler_init(2, OPUSFILE_RATE, PLAYDATE_RATE, 5, &speex_err);
     if (speex_err != 0)
     {
         pd->system->error("Speex error while initializing: %i", speex_err);
@@ -237,120 +195,30 @@ static int play_music_demo(lua_State* L)
     state->op_buf = op_buf;
     state->spx_buf = spx_buf;
 
-    return 1;
+    return 0;
 }
 
-void index_file(char* path)
-{
-    // Open file
-    SDFile *file = pd->file->open(path, kFileReadData);
-    if (file == NULL)
-    {
-        pd->system->error("Could not open file (%s)", path);
-        return;
-    }
-    int err;
-    OggOpusFile* of = op_open_callbacks(file, &cb, NULL, 0, &err);
-    if (err != 0)
-    {
-        pd->system->error("Opus error while opening to index: %i (%s)", err, path);
-        pd->file->close(file);
-        return;
-    }
-
-    const OpusTags* opusTags = op_tags(of, -1);
-    if (opusTags == NULL)
-    {
-        // TODO: Special case for indexing
-        op_free(of);
-        return;
-    }
-
-    // TODO: Index tags. Free op_tags?
-
-    // TODO: Check if album art is needed
-    const char *pictureBlock = opus_tags_query(opusTags, "METADATA_BLOCK_PICTURE", 0);
-    if (pictureBlock == NULL)
-    {
-        op_free(of);
-        return;
-    }
-    OpusPictureTag pictureTag;
-    err = opus_picture_tag_parse(&pictureTag, pictureBlock);
-    if (err != 0)
-    {
-        pd->system->error("Error parsing image data: %i (%s)", err, path);
-        op_free(of);
-        return;
-    }
-
-    if (pictureTag.format != OP_PIC_FORMAT_JPEG && pictureTag.format != OP_PIC_FORMAT_PNG && pictureTag.format != OP_PIC_FORMAT_GIF)
-    {
-        pd->system->logToConsole("Unknown image type (%s)", path);
-        opus_picture_tag_clear(&pictureTag);
-        op_free(of);
-        return;
-    }
-
-    int x, y, channels;
-    unsigned char *originalImage = stbi_load_from_memory(pictureTag.data, (int)pictureTag.data_length, &x, &y, &channels, 1);
-    opus_picture_tag_clear(&pictureTag);
-    if (originalImage == NULL)
-    {
-        pd->system->error("Error reading image data: %s (%s)", stbi_failure_reason(), path);
-        op_free(of);
-        return;
-    }
-
-    unsigned char* newImage = pd->system->realloc(NULL, sizeof(unsigned char) * COVER_SIZE * COVER_SIZE);
-    if (newImage == NULL)
-    {
-        pd->system->error("Error allocating image memory");
-        stbi_image_free(originalImage);
-        op_free(of);
-        return;
-    }
-
-    err = stbir_resize_uint8(originalImage, x, y, 0, newImage, COVER_SIZE, COVER_SIZE, 0, 1);
-    stbi_image_free(originalImage);
-    if (err == 0)
-    {
-        pd->system->error("Error resizing image");
-        pd->system->realloc(newImage, 0);
-        op_free(of);
-        return;
-    }
-
-    floyd_steinberg_dither(newImage, COVER_SIZE, COVER_SIZE);
-    LCDBitmap *bitmap = pack_bitmap(pd, newImage, COVER_SIZE, COVER_SIZE);
-    pd->system->realloc(newImage, 0);
-
-    pd->graphics->drawBitmap(bitmap, 160, 0, kBitmapUnflipped);
-    pd->graphics->freeBitmap(bitmap);
-
-    op_free(of);
-}
-
-static int hello_world(lua_State* L)
-{
-    pd->system->logToConsole("hello!");
-    pd->lua->pushNil();
-    return 1;
-}
-
-int eventHandler(PlaydateAPI* playdate, PDSystemEvent event, uint32_t arg)
+__attribute__((unused)) int eventHandler(PlaydateAPI* playdate, PDSystemEvent event, uint32_t arg)
 {
     if ( event == kEventInitLua )
     {
         pd = playdate;
 
+        struct LUA_C_FUNCTION {
+            lua_CFunction function;
+            char* name;
+        };
+        struct LUA_C_FUNCTION LUA_C_FUNCTIONS[] = {
+            {play_music_demo, "play_music_demo"},
+            {index_file, "index_file"},
+            {index_image, "index_image"}
+        };
         const char* err;
-
-        if ( !pd->lua->addFunction(hello_world, "hello_world", &err) )
-            pd->system->logToConsole("%s:%i: addFunction failed, %s", __FILE__, __LINE__, err);
-
-        if ( !pd->lua->addFunction(play_music_demo, "play_music_demo", &err) )
-            pd->system->logToConsole("%s:%i: addFunction failed, %s", __FILE__, __LINE__, err);
+        for (int i = 0; i < 3; ++i)
+        {
+            if ( !pd->lua->addFunction(LUA_C_FUNCTIONS[i].function, LUA_C_FUNCTIONS[i].name, &err) )
+                pd->system->logToConsole("%s:%i: addFunction failed, %s", __FILE__, __LINE__, err);
+        }
 
         // setup opusfile callbacks
         cb.read = (op_read_func) pd->file->read;
