@@ -1,6 +1,8 @@
-import "ui"
 import "index"
-import "ui"
+import "ui/ui"
+
+-- globals
+playing_track = nil
 
 -- setup
 playdate.setCrankSoundsDisabled(true)
@@ -11,10 +13,9 @@ index_files("", index)
 
 -- init
 audio_init()
-init_track_ui(index)
-
+init_ui(index)
 
 function playdate.update()
-    updateUI()
+    update_ui()
     playdate.timer:updateTimers()
 end
