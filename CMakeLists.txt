@@ -36,7 +36,7 @@ else()
 	add_library(${PLAYDATE_GAME_NAME} SHARED main.c playback.c audio.c index.c image.c)
 endif()
 
-include(${SDK}/C_API/buildsupport/playdate_game.cmake)
+include(cmake/playdate_game.cmake)
 
 set(OP_DISABLE_HTTP ON)
 set(OP_DISABLE_DOCS ON)
@@ -49,4 +49,8 @@ add_subdirectory(lib/speexdsp)
 add_subdirectory(lib/stb)
 target_compile_definitions(stb PRIVATE STBI_NO_STDIO=, STBI_ONLY_JPEG=, STBI_ONLY_PNG=, STBI_ONLY_GIF=)
 
-target_link_libraries(${PLAYDATE_GAME_NAME} opusfile speexdsp stb)
+if (TOOLCHAIN STREQUAL "armgcc")
+	target_link_libraries(${PLAYDATE_GAME_DEVICE} opusfile speexdsp stb)
+else()
+	target_link_libraries(${PLAYDATE_GAME_NAME} opusfile speexdsp stb)
+endif()
