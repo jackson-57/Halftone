@@ -20,11 +20,9 @@ function listview:drawCell(section, row, column, selected, x, y, width, height)
 end
 
 function playdate.AButtonUp()
-	if not playback then
-		playback = index[listview:getSelectedRow()]
-		play_music_demo(playback.path)
-		index_image(playback.path)
-	end
+	playback = index[listview:getSelectedRow()]
+	set_playback(playback.path)
+	index_image(playback.path)
 end
 
 function playdate.upButtonUp()

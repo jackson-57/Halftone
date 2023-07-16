@@ -1,6 +1,7 @@
 #include <pd_api.h>
 #include <opusfile.h>
 #include "index.h"
+#include "playback.h"
 #include "audio.h"
 
 // TODO: malloc vs pd->system->realloc?
@@ -20,12 +21,13 @@ __attribute__((unused)) int eventHandler(PlaydateAPI* playdate, PDSystemEvent ev
             char* name;
         };
         struct LUA_C_FUNCTION LUA_C_FUNCTIONS[] = {
-            {play_music_demo, "play_music_demo"},
-            {index_file, "index_file"},
-            {index_image, "index_image"}
+            {set_playback, "set_playback"},
+            {index_file,   "index_file"},
+            {index_image,  "index_image"},
+            {audio_init, "audio_init"}
         };
         const char* err;
-        for (int i = 0; i < 3; ++i)
+        for (int i = 0; i < 4; ++i)
         {
             if ( !pd->lua->addFunction(LUA_C_FUNCTIONS[i].function, LUA_C_FUNCTIONS[i].name, &err) )
                 pd->system->logToConsole("%s:%i: addFunction failed, %s", __FILE__, __LINE__, err);

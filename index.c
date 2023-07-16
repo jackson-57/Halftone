@@ -1,7 +1,7 @@
 #include "index.h"
 #include "shared_opusfile.h"
 #include "shared_pd.h"
-#include "audio.h"
+#include "shared_audio.h"
 #include "image.h"
 #include <opusfile.h>
 #include <stb_image.h>
