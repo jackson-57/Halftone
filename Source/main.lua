@@ -8,12 +8,12 @@ playing_track = nil
 playdate.setCrankSoundsDisabled(true)
 
 -- index
-local index = {}
+local index = {tracks = {}, albums = {}, artists={}}
 index_files("", index)
 
 -- init
 audio_init()
-init_ui(index)
+init_ui(index.tracks)
 
 function playdate.update()
     update_ui()

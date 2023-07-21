@@ -10,7 +10,7 @@ function update_playback(clear)
 
         if playing_track then
             gfx.drawTextInRect(playing_track.title, 10, 85, 140, 20, nil, "...", nil)
-            gfx.drawTextInRect(playing_track.album, 10, 110, 140, 20, nil, "...", nil)
+            gfx.drawTextInRect(playing_track.album.title, 10, 110, 140, 20, nil, "...", nil)
             gfx.drawTextInRect(playing_track.artist, 10, 135, 140, 20, nil, "...", nil)
         end
 
