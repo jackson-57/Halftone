@@ -14,7 +14,9 @@ int set_playback(lua_State* L)
     // Close old file if open
     if (playbackState.of != NULL)
     {
-        op_free(playbackState.of);
+        OggOpusFile *old_file = playbackState.of;
+        playbackState.of = NULL;
+        op_free(old_file);
     }
 
     // Open file
