@@ -10,6 +10,7 @@ playdate.setCrankSoundsDisabled(true)
 -- index
 local index = {tracks = {}, albums = {}, artists={}}
 index_files("", index)
+link_index(index)
 
 -- init
 audio_init()

@@ -1,7 +1,7 @@
 local pd_file <const> = playdate.file
 
 function index_files(dir, index)
-    for k, file in pairs(pd_file.listFiles(dir)) do
+    for _, file in pairs(pd_file.listFiles(dir)) do
         if pd_file.isdir(file) then
             index_files(dir .. file, index)
         elseif string.match(file, "[^.]+$") == "opus" then
@@ -21,15 +21,26 @@ function index_files(dir, index)
                 local album = artist.albums[meta.album]
                 -- create album if not present
                 if not album then
-                    album = {title = meta.album, artist = artist, year = meta.year, tracks = {}}
+                    album = {title = meta.album, year = meta.year, tracks = {}}
                     artist.albums[meta.album] = album
-                    table.insert(index.albums, album)
                 end
 
-                -- add references
-                track.album = album
                 -- table.insert(album.tracks, meta.track_number, track)
                 table.insert(album.tracks, track)
+            end
+        end
+    end
+end
+
+function link_index(index)
+    -- Add references to index
+    for _, artist in pairs(index.artists) do
+        for _, album in pairs(artist.albums) do
+            album.artist = artist
+            table.insert(index.albums, album)
+
+            for _, track in pairs(album.tracks) do
+                track.album = album
                 table.insert(index.tracks, track)
             end
         end
