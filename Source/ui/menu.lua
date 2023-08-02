@@ -50,7 +50,11 @@ local menuInputHandlers = {
     AButtonUp = function()
         playing_track = index[listview:getSelectedRow()]
         set_playback(playing_track.path)
+
+        playdate.resetElapsedTime()
         index_image(playing_track.path)
+        log_time("index image")
+
         hide_menu()
     end,
 

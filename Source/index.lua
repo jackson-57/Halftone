@@ -54,10 +54,15 @@ end
 function load_index()
     local index = {artists={}}
 
+    playdate.resetElapsedTime()
     index_files("", index)
+    log_time("index")
 
+    -- playdate.resetElapsedTime()
     -- ---@diagnostic disable-next-line: redundant-parameter
     -- pd_datastore.write(index, "index", false)
+    -- print(playdate.getElapsedTime())
+
     link_index(index)
 
     return index
