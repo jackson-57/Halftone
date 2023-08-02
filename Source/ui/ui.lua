@@ -1,7 +1,7 @@
 import "menu"
 import "playback"
 
-local gfx = playdate.graphics
+local gfx <const> = playdate.graphics
 
 menu_open = true
 -- local state_changed = true;

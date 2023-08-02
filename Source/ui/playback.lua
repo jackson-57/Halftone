@@ -1,6 +1,4 @@
-
-
-local gfx = playdate.graphics
+local gfx <const> = playdate.graphics
 
 redraw_track_info = true
 

@@ -3,7 +3,7 @@ import "CoreLibs/nineslice"
 
 local index = nil
 
-local gfx = playdate.graphics
+local gfx <const> = playdate.graphics
 local keyTimer = nil
 local listview = playdate.ui.gridview.new(0, 10)
 listview:setCellPadding(10, 10, 10, 0)
