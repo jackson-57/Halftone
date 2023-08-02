@@ -1,6 +1,8 @@
 local pd_file <const> = playdate.file
+local pd_datastore <const> = playdate.datastore
+local pd_metadata <const> = playdate.metadata
 
-function index_files(dir, index)
+local function index_files(dir, index)
     for _, file in pairs(pd_file.listFiles(dir)) do
         if pd_file.isdir(file) then
             index_files(dir .. file, index)
@@ -32,8 +34,10 @@ function index_files(dir, index)
     end
 end
 
-function link_index(index)
+local function link_index(index)
     -- Add references to index
+    index.albums = {}
+    index.tracks = {}
     for _, artist in pairs(index.artists) do
         for _, album in pairs(artist.albums) do
             album.artist = artist
@@ -45,4 +49,16 @@ function link_index(index)
             end
         end
     end
+end
+
+function load_index()
+    local index = {artists={}}
+
+    index_files("", index)
+
+    -- ---@diagnostic disable-next-line: redundant-parameter
+    -- pd_datastore.write(index, "index", false)
+    link_index(index)
+
+    return index
 end

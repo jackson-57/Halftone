@@ -8,9 +8,11 @@ playing_track = nil
 playdate.setCrankSoundsDisabled(true)
 
 -- index
-local index = {tracks = {}, albums = {}, artists={}}
-index_files("", index)
-link_index(index)
+local index = load_index()
+if not index then
+    print("Failed to load index")
+    do return end
+end
 
 -- init
 audio_init()
