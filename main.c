@@ -22,12 +22,13 @@ __attribute__((unused)) int eventHandler(PlaydateAPI* playdate, PDSystemEvent ev
         };
         struct LUA_C_FUNCTION LUA_C_FUNCTIONS[] = {
             {set_playback, "set_playback"},
+            {get_playback_status, "get_playback_status"},
             {index_file,   "index_file"},
             {index_image,  "index_image"},
             {audio_init, "audio_init"}
         };
         const char* err;
-        for (int i = 0; i < 4; ++i)
+        for (int i = 0; i < 5; ++i)
         {
             if ( !pd->lua->addFunction(LUA_C_FUNCTIONS[i].function, LUA_C_FUNCTIONS[i].name, &err) )
                 pd->system->logToConsole("%s:%i: addFunction failed, %s", __FILE__, __LINE__, err);

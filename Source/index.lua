@@ -1,6 +1,6 @@
 local pd_file <const> = playdate.file
-local pd_datastore <const> = playdate.datastore
-local pd_metadata <const> = playdate.metadata
+-- local pd_datastore <const> = playdate.datastore
+-- local pd_metadata <const> = playdate.metadata
 
 local debug_track_count = 0
 
@@ -13,7 +13,7 @@ local function index_files(dir, index)
             local meta = {}
             meta.duration, meta.title, meta.album, meta.artist, meta.album_artist, meta.year, meta.track_number = index_file(path)
             if meta.duration then
-                local track = {path=path, title=meta.title, artist=meta.artist}
+                local track = {path=path, title=meta.title, artist=meta.artist, duration = meta.duration}
 
                 local artist = index.artists[meta.album_artist]
                 -- create artist if not present

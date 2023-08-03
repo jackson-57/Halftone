@@ -1,4 +1,5 @@
 import "index"
+import "playback"
 import "ui/ui"
 
 -- profiling
@@ -25,9 +26,6 @@ function log_file(str, reset)
 end
 
 log_file("pdaudio alpha v1", true)
-
--- globals
-playing_track = nil
 
 -- setup
 playdate.setCrankSoundsDisabled(true)

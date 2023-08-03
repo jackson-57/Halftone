@@ -7,7 +7,7 @@
 #include <stb_image.h>
 #include <stb_image_resize.h>
 
-int const COVER_SIZE = 240;
+int const COVER_SIZE = 233;
 
 int index_file(lua_State* L)
 {
@@ -155,7 +155,7 @@ int index_image(lua_State *L)
     LCDBitmap *bitmap = pack_bitmap(pd, newImage, COVER_SIZE, COVER_SIZE);
     pd->system->realloc(newImage, 0);
 
-    pd->graphics->drawBitmap(bitmap, 160, 0, kBitmapUnflipped);
+    pd->graphics->drawBitmap(bitmap, 167, 0, kBitmapUnflipped);
     pd->graphics->freeBitmap(bitmap);
 
     op_free(of);
