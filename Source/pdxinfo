@@ -1,5 +1,6 @@
-name=pdaudio
+name=pdaudio alpha
 author=Jackson_57
 description=A proper music player for the Playdate
 bundleID=dev.jackson57.pdaudio
 version=0.1
+buildNumber=1
