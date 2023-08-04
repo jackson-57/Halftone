@@ -2,6 +2,8 @@ local pd_file <const> = playdate.file
 local pd_datastore <const> = playdate.datastore
 local pd_metadata <const> = playdate.metadata
 
+local debug_track_count = 0
+
 local function index_files(dir, index)
     for _, file in pairs(pd_file.listFiles(dir)) do
         if pd_file.isdir(file) then
@@ -46,6 +48,7 @@ local function link_index(index)
             for _, track in pairs(album.tracks) do
                 track.album = album
                 table.insert(index.tracks, track)
+                debug_track_count += 1
             end
         end
     end
@@ -64,6 +67,8 @@ function load_index()
     -- print(playdate.getElapsedTime())
 
     link_index(index)
+
+    log_file("indexed " .. debug_track_count .. " tracks")
 
     return index
 end

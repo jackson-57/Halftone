@@ -4,26 +4,27 @@ import "ui/ui"
 -- profiling
 local pd_file <const> = playdate.file
 
-local file = pd_file.open("log.txt", pd_file.kFileWrite)
-if file then
-    file:write("pdaudio public demo v0.1\n")
-    file:close()
-end
-
 function log_time(name)
     local time = playdate.getElapsedTime()
-    local str = name .. ": " .. time .. "s"
+    log_file(name .. ": " .. time .. "s")
+end
+
+function log_file(str, reset)
     print(str)
 
-    local file = pd_file.open("log.txt", pd_file.kFileAppend)
+    local filemode = pd_file.kFileAppend
+    if reset then
+        filemode = pd_file.kFileWrite
+    end
+
+    local file = pd_file.open("log.txt", filemode)
     if file then
         file:write(str .. '\n')
         file:close()
     end
 end
 
-playdate.resetElapsedTime()
-log_time("test")
+log_file("pdaudio alpha v1", true)
 
 -- globals
 playing_track = nil
