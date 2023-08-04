@@ -1,4 +1,5 @@
 local gfx <const> = playdate.graphics
+local font = gfx.getFont()
 
 redraw_track_info = true
 
@@ -7,9 +8,9 @@ function update_playback(clear)
         clear()
 
         if playing_track then
-            gfx.drawTextInRect(playing_track.title, 10, 85, 140, 20, nil, "...", nil)
-            gfx.drawTextInRect(playing_track.album.title, 10, 110, 140, 20, nil, "...", nil)
-            gfx.drawTextInRect(playing_track.artist, 10, 135, 140, 20, nil, "...", nil)
+            gfx.drawTextInRect(playing_track.title, 10, 85, 140, 20, nil, "...", nil, font)
+            gfx.drawTextInRect(playing_track.album.title, 10, 110, 140, 20, nil, "...", nil, font)
+            gfx.drawTextInRect(playing_track.artist, 10, 135, 140, 20, nil, "...", nil, font)
         end
 
         redraw_track_info = false

@@ -4,6 +4,7 @@ import "CoreLibs/nineslice"
 local index = nil
 
 local gfx <const> = playdate.graphics
+local font = gfx.getFont()
 local keyTimer = nil
 local listview = playdate.ui.gridview.new(0, 10)
 listview:setCellPadding(10, 10, 10, 0)
@@ -16,7 +17,7 @@ function listview:drawCell(section, row, column, selected, x, y, width, height)
 	else
 		gfx.setImageDrawMode(gfx.kDrawModeCopy)
 	end
-	gfx.drawTextInRect(index[row].title, x, y+2, width, height+10, nil, "...", kTextAlignment.center)
+	gfx.drawTextInRect(index[row].title, x, y+2, width, height+10, nil, "...", kTextAlignment.center, font)
 end
 
 local function addKeyRepeat(callback)
