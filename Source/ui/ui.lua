@@ -1,31 +1,51 @@
 import "CoreLibs/ui/gridview"
 import "CoreLibs/nineslice"
+import "CoreLibs/sprites"
 import "CoreLibs/object"
 
 import "consts"
-import "menu"
-import "playback"
+
+import "sideview"
+import "sideviews/art"
+import "sideviews/duration"
+
+import "panel"
+import "listpanel"
+import "panels/nowplaying"
+import "panels/menu"
+import "panels/artists"
+import "panels/albums"
+import "panels/tracks"
+import "panels/settings"
 
 local pd_gfx <const> = playdate.graphics
-local consts <const> = ui_consts
+local pd_sprite <const> = pd_gfx.sprite
 
-menu_open = true
--- local state_changed = true;
+playback_panel = nil
+sideview = nil
 
 function init_ui(index)
-    init_menu(index)
-    show_menu()
-end
+    playback_panel = NowPlaying()
+    sideview = Sideview()
+    Tracks(index.tracks)
 
-local function clear()
-    pd_gfx.setColor(pd_gfx.kColorWhite)
-    pd_gfx.fillRect(0, 0, consts.panel_width, consts.display_height)
+    playdate.BButtonUp = function ()
+        Tracks(index.tracks)
+    end
 end
 
 function update_ui()
-    if menu_open then
-        update_menu(clear)
-    else
-        update_track_info(clear)
-    end
+    pd_sprite.update()
+end
+
+function set_track_ui(track)
+    playback_panel.track = track
+    sideview.duration.track = track
+
+    playdate.resetElapsedTime()
+    sideview.art:setImage(index_art(track.path))
+    log_time("index art")
+
+    playback_panel:update()
+    sideview.duration:setup_timer()
 end

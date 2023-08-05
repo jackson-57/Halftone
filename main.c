@@ -21,11 +21,11 @@ __attribute__((unused)) int eventHandler(PlaydateAPI* playdate, PDSystemEvent ev
             char* name;
         };
         struct LUA_C_FUNCTION LUA_C_FUNCTIONS[] = {
-            {set_playback, "set_playback"},
+            {set_playback,        "set_playback"},
             {get_playback_status, "get_playback_status"},
-            {index_file,   "index_file"},
-            {index_image,  "index_image"},
-            {audio_init, "audio_init"}
+            {index_file,          "index_file"},
+            {index_art,           "index_art"},
+            {audio_init,          "audio_init"}
         };
         const char* err;
         for (int i = 0; i < 5; ++i)

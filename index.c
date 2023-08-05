@@ -71,7 +71,7 @@ int index_file(lua_State* L)
     return stack_count;
 }
 
-int index_image(lua_State *L)
+int index_art(lua_State *L)
 {
     const char* path = pd->lua->getArgString(1);
 
@@ -155,9 +155,8 @@ int index_image(lua_State *L)
     LCDBitmap *bitmap = pack_bitmap(pd, newImage, COVER_SIZE, COVER_SIZE);
     pd->system->realloc(newImage, 0);
 
-    pd->graphics->drawBitmap(bitmap, 167, 0, kBitmapUnflipped);
-    pd->graphics->freeBitmap(bitmap);
+    pd->lua->pushBitmap(bitmap);
 
     op_free(of);
-    return 0;
+    return 1;
 }

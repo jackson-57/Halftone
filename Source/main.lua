@@ -39,7 +39,7 @@ end
 
 -- init
 audio_init()
-init_ui(index.tracks)
+init_ui(index)
 
 function playdate.update()
     update_ui()
