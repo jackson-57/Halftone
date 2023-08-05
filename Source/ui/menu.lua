@@ -1,9 +1,8 @@
-import "CoreLibs/ui/gridview"
-import "CoreLibs/nineslice"
-
 local index = nil
 
 local pd_gfx <const> = playdate.graphics
+local consts <const> = ui_consts
+
 local font = pd_gfx.getFont()
 local keyTimer = nil
 local listview = playdate.ui.gridview.new(0, 10)
@@ -36,7 +35,7 @@ end
 function update_menu(clear)
     if listview.needsDisplay then
         clear()
-        listview:drawInRect(0, 0, 167, 240)
+        listview:drawInRect(0, 0, consts.panel_width, consts.display_height)
     end
 end
 

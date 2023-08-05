@@ -1,7 +1,13 @@
+import "CoreLibs/ui/gridview"
+import "CoreLibs/nineslice"
+import "CoreLibs/object"
+
+import "consts"
 import "menu"
 import "playback"
 
 local pd_gfx <const> = playdate.graphics
+local consts <const> = ui_consts
 
 menu_open = true
 -- local state_changed = true;
@@ -13,7 +19,7 @@ end
 
 local function clear()
     pd_gfx.setColor(pd_gfx.kColorWhite)
-    pd_gfx.fillRect(0, 0, 167, 240)
+    pd_gfx.fillRect(0, 0, consts.panel_width, consts.display_height)
 end
 
 function update_ui()

@@ -1,7 +1,8 @@
 local pd_gfx <const> = playdate.graphics
-local font = pd_gfx.getFont()
 local pd_timer <const> = playdate.timer
-local cover_size = 233
+local consts <const> = ui_consts
+
+local font = pd_gfx.getFont()
 
 local playback_ui_timer = nil
 
@@ -22,18 +23,21 @@ function update_track_info(clear)
 end
 
 local function update_playback_ui()
+local progress_height = consts.display_height - consts.cover_size
     local duration = playing_track.duration
     local elapsed = get_playback_status()
-    if elapsed then
-        local percentage_complete = elapsed / duration
-        -- https://stackoverflow.com/a/18313481
-        local filled_width = math.floor((cover_size * percentage_complete) + 0.5)
-        local unfilled_width = cover_size - filled_width
-		pd_gfx.setColor(pd_gfx.kColorBlack)
-        pd_gfx.fillRect(400 - cover_size, cover_size, filled_width, 240 - cover_size)
-		pd_gfx.setColor(pd_gfx.kColorWhite)
-        pd_gfx.fillRect(400 - cover_size + filled_width, cover_size, unfilled_width, 240 - cover_size)
+    if not elapsed then
+        elapsed = 0
     end
+
+    local percentage_complete = elapsed / duration
+    -- https://stackoverflow.com/a/18313481
+    local filled_width = math.floor((consts.cover_size * percentage_complete) + 0.5)
+    local unfilled_width = consts.cover_size - filled_width
+    pd_gfx.setColor(pd_gfx.kColorBlack)
+    pd_gfx.fillRect(consts.panel_width, consts.cover_size, filled_width, progress_height)
+    pd_gfx.setColor(pd_gfx.kColorWhite)
+    pd_gfx.fillRect(consts.panel_width + filled_width, consts.cover_size, unfilled_width, progress_height)
 end
 
 function setup_playback_ui_timer()
