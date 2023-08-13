@@ -4,8 +4,8 @@ local font <const> = pd_gfx.getFont()
 class("Tracks").extends(ListPanel)
 
 local function drawCell(self, section, row, column, selected, x, y, width, height)
-    self.drawCellBackground(selected, x, y, width)
-	pd_gfx.drawTextInRect(self.parent.tracks[row].title, x, y+2, width, height+10, nil, "...", kTextAlignment.center, font)
+    self.drawCellBackground(selected, x, y, width, height)
+	pd_gfx.drawTextInRect(self.parent.tracks[row].title, x + 5, y + 2, width - 5, height, nil, "...", kTextAlignment.left, font)
 end
 
 function Tracks:init(tracks)
