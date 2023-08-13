@@ -21,5 +21,7 @@ function Albums:init(albums)
 end
 
 function Albums:select()
-    Tracks(self.albums[self.listview:getSelectedRow()].tracks)
+    local album = self.albums[self.listview:getSelectedRow()]
+    local tracks = Tracks(album.tracks)
+    tracks.section_title = album.title
 end

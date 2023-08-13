@@ -20,6 +20,12 @@ function Menu:init(index)
             end
         },
         {
+            name = "artists",
+            select = function ()
+                Artists(self.index.artists)
+            end
+        },
+        {
             name = "tracks",
             select = function ()
                 Tracks(self.index.tracks)
