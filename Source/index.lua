@@ -10,26 +10,25 @@ local function index_files(dir, index)
             index_files(dir .. file, index)
         elseif string.match(file, "[^.]+$") == "opus" then
             local path = dir .. file
-            local meta = {}
-            meta.duration, meta.title, meta.album, meta.artist, meta.album_artist, meta.year, meta.track_number = index_file(path)
-            if meta.duration then
-                local track = {path=path, title=meta.title, artist=meta.artist, duration = meta.duration}
+            local meta_duration, meta_title, meta_album, meta_artist, meta_album_artist, meta_year, meta_track_number = index_file(path)
+            if meta_duration then
+                local track = {path=path, title=meta_title, artist=meta_artist, duration = meta_duration}
 
-                local artist = index.artists[meta.album_artist]
+                local artist = index.artists[meta_album_artist]
                 -- create artist if not present
                 if not artist then
-                    artist = {name = meta.album_artist, albums = {}}
-                    index.artists[meta.album_artist] = artist
+                    artist = {name = meta_album_artist, albums = {}}
+                    index.artists[meta_album_artist] = artist
                 end
 
-                local album = artist.albums[meta.album]
+                local album = artist.albums[meta_album]
                 -- create album if not present
                 if not album then
-                    album = {title = meta.album, year = meta.year, tracks = {}}
-                    artist.albums[meta.album] = album
+                    album = {title = meta_album, year = meta_year, tracks = {}}
+                    artist.albums[meta_album] = album
                 end
 
-                -- table.insert(album.tracks, meta.track_number, track)
+                -- table.insert(album.tracks, meta_track_number, track)
                 table.insert(album.tracks, track)
             end
         end
