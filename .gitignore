@@ -62,3 +62,4 @@ pdex.*
 
 # TODO: deal
 lib/
+*.code-workspace
