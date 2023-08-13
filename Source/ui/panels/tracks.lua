@@ -1,7 +1,11 @@
 local pd_gfx <const> = playdate.graphics
 local font <const> = pd_gfx.getFont()
 
-class("Tracks").extends(ListPanel)
+local properties = {
+    section_title = "tracks"
+}
+
+class("Tracks", properties).extends(ListPanel)
 
 local function drawCell(self, section, row, column, selected, x, y, width, height)
     self.drawCellBackground(selected, x, y, width, height)

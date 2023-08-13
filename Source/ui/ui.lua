@@ -27,10 +27,10 @@ sideview = nil
 function init_ui(index)
     playback_panel = NowPlaying()
     sideview = Sideview()
-    Tracks(index.tracks)
+    Menu(index)
 
     playdate.BButtonUp = function ()
-        Tracks(index.tracks)
+        Menu(index)
     end
 end
 
