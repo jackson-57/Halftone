@@ -7,8 +7,6 @@
 #include <stb_image.h>
 #include <stb_image_resize.h>
 
-int const COVER_SIZE = 233;
-
 int index_file(lua_State* L)
 {
     const char* path = pd->lua->getArgString(1);
@@ -74,13 +72,14 @@ int index_file(lua_State* L)
 int index_art(lua_State *L)
 {
     const char* path = pd->lua->getArgString(1);
+    int stack_count = 0;
 
     // Open file
     SDFile *file = pd->file->open(path, kFileReadData);
     if (file == NULL)
     {
         pd->system->error("Could not open file (%s)", path);
-        return 0;
+        return stack_count;
     }
     int err;
     OggOpusFile* of = op_open_callbacks(file, &cb, NULL, 0, &err);
@@ -88,14 +87,14 @@ int index_art(lua_State *L)
     {
         pd->system->error("Opus error while opening to index image: %i (%s)", err, path);
         pd->file->close(file);
-        return 0;
+        return stack_count;
     }
 
     const OpusTags* opusTags = op_tags(of, -1);
     if (opusTags == NULL)
     {
         op_free(of);
-        return 0;
+        return stack_count;
     }
 
     // TODO: Check if album art is needed
@@ -103,7 +102,7 @@ int index_art(lua_State *L)
     if (pictureBlock == NULL)
     {
         op_free(of);
-        return 0;
+        return stack_count;
     }
     OpusPictureTag pictureTag;
     err = opus_picture_tag_parse(&pictureTag, pictureBlock);
@@ -111,7 +110,7 @@ int index_art(lua_State *L)
     {
         pd->system->error("Error parsing image data: %i (%s)", err, path);
         op_free(of);
-        return 0;
+        return stack_count;
     }
 
     if (pictureTag.format != OP_PIC_FORMAT_JPEG && pictureTag.format != OP_PIC_FORMAT_PNG && pictureTag.format != OP_PIC_FORMAT_GIF)
@@ -119,7 +118,7 @@ int index_art(lua_State *L)
         pd->system->logToConsole("Unknown image type (%s)", path);
         opus_picture_tag_clear(&pictureTag);
         op_free(of);
-        return 0;
+        return stack_count;
     }
 
     int x, y, channels;
@@ -129,34 +128,43 @@ int index_art(lua_State *L)
     {
         pd->system->error("Error reading image data: %s (%s)", stbi_failure_reason(), path);
         op_free(of);
-        return 0;
+        return stack_count;
     }
 
-    unsigned char* newImage = pd->system->realloc(NULL, sizeof(unsigned char) * COVER_SIZE * COVER_SIZE);
-    if (newImage == NULL)
+    const int art_sizes_count = pd->lua->getArgCount() - 1;
+    for (int i = 0; i < art_sizes_count; ++i)
     {
-        pd->system->error("Error allocating image memory");
-        stbi_image_free(originalImage);
-        op_free(of);
-        return 0;
-    }
+        // arguments start at 1, and we've already gotten first argument
+        int cover_size = pd->lua->getArgInt(i + 2);
 
-    err = stbir_resize_uint8(originalImage, x, y, 0, newImage, COVER_SIZE, COVER_SIZE, 0, 1);
-    stbi_image_free(originalImage);
-    if (err == 0)
-    {
-        pd->system->error("Error resizing image");
+        unsigned char* newImage = pd->system->realloc(NULL, sizeof(unsigned char) * cover_size * cover_size);
+        if (newImage == NULL)
+        {
+            pd->system->error("Error allocating image memory");
+            stbi_image_free(originalImage);
+            op_free(of);
+            return stack_count;
+        }
+        
+        err = stbir_resize_uint8(originalImage, x, y, 0, newImage, cover_size, cover_size, 0, 1);
+        if (err == 0)
+        {
+            pd->system->error("Error resizing image");
+            stbi_image_free(originalImage);
+            pd->system->realloc(newImage, 0);
+            op_free(of);
+            return stack_count;
+        }
+
+        floyd_steinberg_dither(newImage, cover_size, cover_size);
+        LCDBitmap *bitmap = pack_bitmap(pd, newImage, cover_size, cover_size);
         pd->system->realloc(newImage, 0);
-        op_free(of);
-        return 0;
+
+        pd->lua->pushBitmap(bitmap);
+        stack_count++;
     }
 
-    floyd_steinberg_dither(newImage, COVER_SIZE, COVER_SIZE);
-    LCDBitmap *bitmap = pack_bitmap(pd, newImage, COVER_SIZE, COVER_SIZE);
-    pd->system->realloc(newImage, 0);
-
-    pd->lua->pushBitmap(bitmap);
-
+    stbi_image_free(originalImage);
     op_free(of);
-    return 1;
+    return stack_count;
 }

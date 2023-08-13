@@ -27,7 +27,7 @@ local function drawSectionHeader(self, section, x, y, width, height)
     pd_gfx.setColor(pd_gfx.kColorBlack)
     pd_gfx.fillRect(x, y, width, height)
     pd_gfx.setImageDrawMode(pd_gfx.kDrawModeInverted)
-    pd_gfx.drawTextInRect(self.parent.section_title, x + 10, y + 1, width, height, nil, "...", kTextAlignment.left, font)
+    pd_gfx.drawTextInRect(self.parent.section_title, x + 10, y + 1, width, height, nil, "...", nil, font)
 end
 
 local function addKeyRepeat(self, callback)

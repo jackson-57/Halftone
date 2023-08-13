@@ -5,7 +5,7 @@ class("Menu").extends(ListPanel)
 
 local function drawCell(self, section, row, column, selected, x, y, width, height)
     self.drawCellBackground(selected, x, y, width, height)
-	pd_gfx.drawTextInRect(self.parent.menuOptions[row].name, x + 5, y + 2, width - 5, height, nil, "...", kTextAlignment.left, font)
+	pd_gfx.drawTextInRect(self.parent.menuOptions[row].name, x + 5, y + 2, width - 5, height, nil, "...", nil, font)
 end
 
 function Menu:init(index)

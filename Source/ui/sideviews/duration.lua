@@ -1,7 +1,7 @@
 local pd_gfx <const> = playdate.graphics
 local pd_timer <const> = playdate.timer
 
--- local font <const> = pd_gfx.getFont()
+local font <const> = pd_gfx.getFont(pd_gfx.font.kVariantBold)
 local consts <const> = ui_consts
 
 class("DurationSideview").extends(pd_gfx.sprite)
@@ -10,7 +10,7 @@ function DurationSideview:init()
     Sideview.super.init(self)
 
     self:setCenter(0, 0)
-    self:setBounds(consts.panel_width, consts.cover_size, consts.cover_size, consts.progress_height)
+    self:setBounds(consts.panel_width, consts.cover_size_full, consts.cover_size_full, consts.progress_height)
     self:add()
 
     self:setUpdatesEnabled(false)
@@ -27,18 +27,21 @@ function DurationSideview:draw(x, y, width, height)
         -- https://stackoverflow.com/a/18313481
         local filled_width = math.floor((width * (elapsed / duration)) + 0.5)
         pd_gfx.fillRect(x, y, filled_width, height)
+
+        pd_gfx.setImageDrawMode(pd_gfx.kDrawModeNXOR)
+        pd_gfx.font.drawText(font, sec_to_hms(elapsed), x + 2, y + 2)
+        -- todo: cache?
+        pd_gfx.font.drawTextAligned(font, sec_to_hms(duration), width - 2, y + 2, kTextAlignment.right)
     end
 end
 
 function DurationSideview:setup_timer()
     if not self.timer then
-        print("A")
         self.timer = pd_timer.new(1000, function()
             self:markDirty()
         end)
         self.timer.repeats = true
     else
-        print("B")
         self.timer:reset()
     end
 
