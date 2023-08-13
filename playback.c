@@ -55,3 +55,56 @@ int get_playback_status(lua_State *L)
     pd->lua->pushInt((int)(op_pcm_tell(playbackState.of) / OPUSFILE_RATE));
     return 1;
 }
+
+int toggle_playback(lua_State *L)
+{
+    if (playbackState.of == NULL)
+    {
+        return 0;
+    }
+
+    int currently_playing = soundSource != NULL;
+
+    // Toggle playback if desired state isn't given
+    int playing = !currently_playing;
+    if (pd->lua->getArgCount())
+    {
+        playing = pd->lua->getArgBool(1);
+    }
+
+    if (playing)
+    {
+        if (!currently_playing)
+        {
+            soundSource = pd->sound->addSource(AudioHandler, &playbackState, 1);
+        }
+    }
+    else
+    {
+        if (currently_playing)
+        {
+            pd->sound->removeSource(soundSource);
+            soundSource = NULL;
+        }
+    }
+
+    return 0;
+}
+
+int seek_playback(lua_State *L)
+{
+    int seconds = pd->lua->getArgInt(1);
+
+    if (playbackState.of == NULL)
+    {
+        return 0;
+    }
+
+    int err = op_pcm_seek(playbackState.of, seconds * OPUSFILE_RATE);
+    if (err != 0)
+    {
+        pd->system->error("Opus error while seeking: %i", err);
+    }
+
+    return 0;
+}

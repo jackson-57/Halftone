@@ -30,9 +30,12 @@ function init_ui(index)
     sideview = Sideview()
     Menu(index)
 
+    playdate.AButtonUp = toggle_playback
     playdate.BButtonUp = function ()
         Menu(index)
     end
+    playdate.leftButtonUp = play_previous
+    playdate.rightButtonUp = play_next
 end
 
 function update_ui()

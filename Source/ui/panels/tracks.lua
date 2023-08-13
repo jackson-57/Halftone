@@ -21,5 +21,5 @@ function Tracks:init(tracks)
 end
 
 function Tracks:select()
-    play_track(self.tracks[self.listview:getSelectedRow()])
+    set_queue(self.tracks, self.listview:getSelectedRow())
 end

@@ -59,3 +59,11 @@ function DurationSideview:remove()
 
     DurationSideview.super.remove(self)
 end
+
+function DurationSideview:start_seeking()
+
+end
+
+function DurationSideview:end_seeking()
+
+end

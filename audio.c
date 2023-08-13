@@ -91,6 +91,25 @@ int refill_speex(Buffer *buffer, PlaybackState *playbackState, int offset)
 
     // get opus samples
     int in_res = get_buffered_samples(audioState->op_buf, playbackState, available, refill_opus);
+
+    // call for next track if no samples returned
+    if (in_res == 0)
+    {
+        // free current
+        op_free(playbackState->of);
+        playbackState->of = NULL;
+//        pd->sound->removeSource(soundSource);
+
+        const char* outerr;
+        int err = pd->lua->callFunction("play_next", 0, &outerr);
+        if (err != 1)
+        {
+            pd->system->error("Lua error while calling for next track: %s", outerr);
+        }
+
+        return 0;
+    }
+
     int16_t *input = audioState->op_buf->buf + audioState->op_buf->pos - in_res;
 
     uint32_t in_len = in_res / 2;
