@@ -2,19 +2,8 @@ local pd_gfx <const> = playdate.graphics
 local pd_timer <const> = playdate.timer
 
 local font <const> = pd_gfx.getFont(pd_gfx.font.kVariantBold)
-local consts <const> = ui_consts
 
-class("DurationSideview").extends(pd_gfx.sprite)
-
-function DurationSideview:init()
-    Sideview.super.init(self)
-
-    self:setCenter(0, 0)
-    self:setBounds(consts.panel_width, consts.cover_size_full, consts.cover_size_full, consts.progress_height)
-    self:add()
-
-    self:setUpdatesEnabled(false)
-end
+class("DurationSideview").extends(BarSideview)
 
 function DurationSideview:draw(x, y, width, height)
     if self.track then

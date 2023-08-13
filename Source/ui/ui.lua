@@ -6,11 +6,12 @@ import "CoreLibs/object"
 import "consts"
 
 import "sideview"
+import "sideviews/barsideview"
 import "sideviews/art"
 import "sideviews/duration"
 
 import "panel"
-import "listpanel"
+import "panels/listpanel"
 import "panels/nowplaying"
 import "panels/menu"
 import "panels/artists"
@@ -22,8 +23,8 @@ local pd_gfx <const> = playdate.graphics
 local pd_sprite <const> = pd_gfx.sprite
 local consts <const> = ui_consts
 
-playback_panel = nil
-sideview = nil
+local playback_panel = nil
+local sideview = nil
 
 function init_ui(index)
     playback_panel = NowPlaying()
