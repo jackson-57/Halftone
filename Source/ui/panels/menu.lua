@@ -14,6 +14,12 @@ function Menu:init(index)
 
     self.menuOptions = {
         {
+            name = "albums",
+            select = function ()
+                Albums(self.index.albums)
+            end
+        },
+        {
             name = "tracks",
             select = function ()
                 Tracks(self.index.tracks)
