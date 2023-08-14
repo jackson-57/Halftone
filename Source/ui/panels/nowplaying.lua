@@ -1,5 +1,5 @@
 local pd_gfx <const> = playdate.graphics
-local font <const> = pd_gfx.getFont()
+local font <const> = pd_gfx.getFont(pd_gfx.font.kVariantBold)
 local consts <const> = ui_consts
 
 local height <const> = 20
