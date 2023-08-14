@@ -31,12 +31,16 @@ function init_ui(index)
     sideview = Sideview()
     Menu(index)
 
-    playdate.AButtonUp = toggle_playback
+    playdate.AButtonUp = toggle_playing
     playdate.BButtonUp = function ()
         Menu(index)
     end
-    playdate.leftButtonUp = play_previous
-    playdate.rightButtonUp = play_next
+    playdate.leftButtonDown = function ()
+        sideview.duration:start_seek_timer(playdate.kButtonLeft)
+    end
+    playdate.rightButtonDown = function ()
+        sideview.duration:start_seek_timer(playdate.kButtonRight)
+    end
 end
 
 function update_ui()
@@ -52,7 +56,15 @@ function set_track_ui(track)
     log_time("index art")
 
     playback_panel:update()
-    sideview.duration:setup_timer()
+    sideview.duration:reset_update_timer()
+end
+
+function toggle_playing_ui(playing)
+    if playing then
+        sideview.duration.update_timer:start()
+    else
+        sideview.duration.update_timer:pause()
+    end
 end
 
 -- https://chat.openai.com/share/9baf2769-261c-4051-be8c-b17c7c722973

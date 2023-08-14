@@ -67,39 +67,33 @@ int toggle_playback(lua_State *L)
 
     // Toggle playback if desired state isn't given
     int playing = !currently_playing;
-    if (pd->lua->getArgCount())
+    if (!pd->lua->argIsNil(1))
     {
         playing = pd->lua->getArgBool(1);
     }
 
-    if (playing)
+    if (playing && !currently_playing)
     {
-        if (!currently_playing)
-        {
-            soundSource = pd->sound->addSource(AudioHandler, &playbackState, 1);
-        }
+        soundSource = pd->sound->addSource(AudioHandler, &playbackState, 1);
     }
-    else
+    else if (!playing && currently_playing)
     {
-        if (currently_playing)
-        {
-            pd->sound->removeSource(soundSource);
-            soundSource = NULL;
-        }
+        pd->sound->removeSource(soundSource);
+        soundSource = NULL;
     }
 
-    return 0;
+    pd->lua->pushBool(playing);
+    return 1;
 }
 
 int seek_playback(lua_State *L)
 {
-    int seconds = pd->lua->getArgInt(1);
-
     if (playbackState.of == NULL)
     {
         return 0;
     }
 
+    int seconds = pd->lua->getArgInt(1);
     int err = op_pcm_seek(playbackState.of, seconds * OPUSFILE_RATE);
     if (err != 0)
     {

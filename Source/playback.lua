@@ -33,3 +33,9 @@ function play_next()
         play_track(queue[queue_position])
     end
 end
+
+function toggle_playing(playing)
+    local playing_result = toggle_playback(playing)
+    if playing_result == nil then return end
+    toggle_playing_ui(playing_result)
+end
