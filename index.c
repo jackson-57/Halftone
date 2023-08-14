@@ -7,7 +7,7 @@
 #include <stb_image.h>
 #include <stb_image_resize.h>
 
-int index_file(lua_State* L)
+int parse_metadata(lua_State* L)
 {
     const char* path = pd->lua->getArgString(1);
     int stack_count = 0;
@@ -69,7 +69,7 @@ int index_file(lua_State* L)
     return stack_count;
 }
 
-int index_art(lua_State *L)
+int process_art(lua_State *L)
 {
     const char* path = pd->lua->getArgString(1);
     int stack_count = 0;

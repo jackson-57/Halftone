@@ -52,7 +52,7 @@ function set_track_ui(track)
     sideview.duration.track = track
 
     playdate.resetElapsedTime()
-    sideview.art:setImage(index_art(track.path, consts.cover_size_full))
+    sideview.art:setImage(process_art(track.path, consts.cover_size_full))
     log_time("index art")
 
     playback_panel:update()

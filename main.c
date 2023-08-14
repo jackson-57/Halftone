@@ -25,8 +25,8 @@ __attribute__((unused)) int eventHandler(PlaydateAPI* playdate, PDSystemEvent ev
             {get_playback_status, "get_playback_status"},
             {toggle_playback, "toggle_playback"},
             {seek_playback, "seek_playback"},
-            {index_file,          "index_file"},
-            {index_art,           "index_art"},
+            {parse_metadata, "parse_metadata"},
+            {process_art, "process_art"},
             {audio_init,          "audio_init"}
         };
         const char* err;

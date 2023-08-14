@@ -1,4 +1,4 @@
 #include <pd_api.h>
 
-int index_file(lua_State* L);
-int index_art(lua_State *L);
+int parse_metadata(lua_State* L);
+int process_art(lua_State *L);

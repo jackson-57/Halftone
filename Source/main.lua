@@ -1,3 +1,6 @@
+-- consts
+app_dir = ".player/"
+
 import "index"
 import "playback"
 import "ui/ui"
@@ -29,9 +32,10 @@ log_file("pdaudio alpha v1", true)
 
 -- setup
 playdate.setCrankSoundsDisabled(true)
+pd_file.mkdir(app_dir)
 
 -- index
-local index = load_index()
+local index = init_index()
 if not index then
     print("Failed to load index")
     do return end
