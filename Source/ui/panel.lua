@@ -1,5 +1,5 @@
 local pd_gfx <const> = playdate.graphics
-local pd_image <const> = pd_gfx.image
+local pd_img <const> = pd_gfx.image
 
 local consts <const> = ui_consts
 
@@ -17,6 +17,6 @@ function Panel:init()
 
     self:setCenter(0, 0)
     self:moveTo(self.panel_x, self.panel_y)
-    self:setImage(pd_image.new(self.panel_width, self.panel_height))
+    self:setImage(pd_img.new(self.panel_width, self.panel_height))
     self:add()
 end

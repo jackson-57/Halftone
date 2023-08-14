@@ -3,6 +3,8 @@ import "CoreLibs/nineslice"
 import "CoreLibs/sprites"
 import "CoreLibs/object"
 
+import "consts"
+
 import "sideview"
 import "sideviews/barsideview"
 import "sideviews/art"
@@ -19,9 +21,6 @@ import "panels/settings"
 
 local pd_gfx <const> = playdate.graphics
 local pd_sprite <const> = pd_gfx.sprite
-local pd_img <const> = pd_gfx.image
-local consts <const> = consts
-local ui_consts <const> = ui_consts
 
 local playback_panel = nil
 local sideview = nil
@@ -51,7 +50,7 @@ function set_track_ui(track)
     playback_panel.track = track
     sideview.duration.track = track
 
-    sideview.art:setImage(pd_img.new(consts.album_art_path .. ui_consts.cover_size_full .. "/" .. track.album.art_uuid))
+    sideview.art:set_album(track.album)
 
     playback_panel:update()
     sideview.duration:reset_update_timer()
