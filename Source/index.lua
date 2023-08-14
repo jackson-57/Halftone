@@ -1,6 +1,14 @@
-local pd_file <const> = playdate.file
+import "CoreLibs/string"
 
-local saved_index_path <const> = app_dir .. "library.idx"
+local pd_file <const> = playdate.file
+local pd_datastore <const> = playdate.datastore
+local pd_uuid <const> = playdate.string.UUID
+
+local consts <const> = consts
+
+local saved_index_path <const> = consts.app_dir .. "library.idx"
+local album_art_path <const> = consts.app_dir .. "art_cache/"
+local uuid_length <const> = 10
 
 local function scan_files(dir, callback)
     for _, file in pairs(pd_file.listFiles(dir)) do
@@ -47,7 +55,7 @@ local function index_files()
             local album = named_artist.albums[meta_album]
             -- create album if not present
             if not album then
-                album = {title = meta_album, year = meta_year, tracks = {}}
+                album = {title = meta_album, year = meta_year, tracks = {}, art_uuid=pd_uuid(uuid_length)}
                 named_artist.albums[meta_album] = album
                 table.insert(artist.albums, album)
             end
@@ -107,6 +115,39 @@ local function save_index(index, byte_count)
     file:close()
 end
 
+local function check_art()
+    -- Check album art presence
+    local clean = false
+
+    for _, size in pairs(consts.cover_art_sizes) do
+        if not pd_file.isdir(album_art_path .. size) then
+            clean = true
+            break
+        end
+    end
+
+    return clean
+end
+
+local function index_art(index)
+    -- Clear directory
+    pd_file.delete(album_art_path, true)
+
+    -- Recreate directories
+    for _, size in pairs(consts.cover_art_sizes) do
+        pd_file.mkdir(album_art_path .. size)
+    end
+
+    for _, album in pairs(index.albums) do
+        -- (Hack) Write art to disk from Lua
+        local art_batch = {process_art(album.tracks[1].path, table.unpack(consts.cover_art_sizes))}
+
+        for i, art in pairs(art_batch) do
+            pd_datastore.writeImage(art, album_art_path .. consts.cover_art_sizes[i] .. "/" .. album.art_uuid .. ".pdi")
+        end
+    end
+end
+
 function init_index()
     -- Get total size of all audio files
     playdate.resetElapsedTime()
@@ -115,11 +156,14 @@ function init_index()
 
     -- Attempt to load saved index
     playdate.resetElapsedTime()
+    local clean_index = false
     local index = load_saved_index(byte_count)
     log_time("loading saved index")
 
     -- Build the index if the returned index is nil, save
     if not index then
+        clean_index = true
+
         playdate.resetElapsedTime()
         index = index_files()
         log_time("building index")
@@ -133,6 +177,13 @@ function init_index()
     playdate.resetElapsedTime()
     link_index(index)
     log_time("linking index")
+
+    -- Process album art if missing or a clean index
+    if clean_index or check_art() then
+        playdate.resetElapsedTime()
+        index_art(index)
+        log_time("processing album art")
+    end
 
     return index
 end

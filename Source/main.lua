@@ -1,6 +1,5 @@
--- consts
-app_dir = ".player/"
-
+import "ui/consts"
+import "consts"
 import "index"
 import "playback"
 import "ui/ui"
@@ -32,7 +31,7 @@ log_file("pdaudio alpha v1", true)
 
 -- setup
 playdate.setCrankSoundsDisabled(true)
-pd_file.mkdir(app_dir)
+pd_file.mkdir(consts.app_dir)
 
 -- index
 local index = init_index()
