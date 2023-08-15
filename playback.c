@@ -13,7 +13,7 @@ int set_playback(lua_State* L)
     const char *path = pd->lua->getArgString(1);
 
     // Do not continue if new file is already loaded
-    if (playbackState.new_of != NULL)
+    if (playbackState.of != playbackState.unsafe_of)
     {
         pd->system->error("New Opus file is already loaded.");
         return 0;
@@ -27,7 +27,7 @@ int set_playback(lua_State* L)
         return 0;
     }
     int err;
-    playbackState.new_of = op_open_callbacks(file, &cb, NULL, 0, &err);
+    playbackState.of = op_open_callbacks(file, &cb, NULL, 0, &err);
     if (err != 0)
     {
         pd->system->error("Opus error while opening: %i", err);
@@ -45,19 +45,19 @@ int set_playback(lua_State* L)
 
 int get_playback_status(lua_State *L)
 {
-    if (playbackState.current_of == NULL)
+    if (playbackState.of == NULL)
     {
         return 0;
     }
 
     // elapsed time
-    pd->lua->pushInt((int)(op_pcm_tell(playbackState.current_of) / OPUSFILE_RATE));
+    pd->lua->pushInt((int)(op_pcm_tell(playbackState.of) / OPUSFILE_RATE));
     return 1;
 }
 
 int toggle_playback(lua_State *L)
 {
-    if (playbackState.current_of == NULL)
+    if (playbackState.of == NULL)
     {
         return 0;
     }
@@ -87,13 +87,13 @@ int toggle_playback(lua_State *L)
 
 int seek_playback(lua_State *L)
 {
-    if (playbackState.current_of == NULL)
+    if (playbackState.of == NULL)
     {
         return 0;
     }
 
     int seconds = pd->lua->getArgInt(1);
-    int err = op_pcm_seek(playbackState.current_of, seconds * OPUSFILE_RATE);
+    int err = op_pcm_seek(playbackState.of, seconds * OPUSFILE_RATE);
     if (err != 0)
     {
         pd->system->error("Opus error while seeking: %i", err);
@@ -110,15 +110,15 @@ void playback_terminate(void)
         soundSource = NULL;
     }
 
-    if (playbackState.current_of != NULL)
+    if (playbackState.of != NULL)
     {
-        op_free(playbackState.current_of);
-        playbackState.current_of = NULL;
+        op_free(playbackState.of);
+        playbackState.of = NULL;
     }
 
-    if (playbackState.new_of != NULL)
+    if (playbackState.unsafe_of != NULL)
     {
-        op_free(playbackState.new_of);
-        playbackState.new_of = NULL;
+        op_free(playbackState.unsafe_of);
+        playbackState.unsafe_of = NULL;
     }
 }

@@ -78,11 +78,11 @@ int get_buffered_samples(Buffer *buffer, PlaybackState *playbackState, int len, 
 
 int refill_opus(Buffer *buffer, PlaybackState *playbackState, int offset)
 {
-    if (playbackState->current_of == NULL)
+    if (playbackState->unsafe_of == NULL)
     {
         return -1;
     }
-    return op_read_stereo(playbackState->current_of, buffer->buf + offset, buffer->size - offset);
+    return op_read_stereo(playbackState->unsafe_of, buffer->buf + offset, buffer->size - offset);
 }
 
 int refill_speex(Buffer *buffer, PlaybackState *playbackState, int offset)
@@ -122,12 +122,10 @@ int AudioHandler(void *context, int16_t *left, int16_t *right, int len) {
     //   spend as little time here as possible
     // TODO: Move decoding out of callback
 
-    if (playbackState->new_of)
+    if (playbackState->unsafe_of != playbackState->of)
     {
-        OggOpusFile *old_of = playbackState->current_of;
-        playbackState->current_of = playbackState->new_of;
-        playbackState->new_of = NULL;
-        op_free(old_of);
+        op_free(playbackState->unsafe_of);
+        playbackState->unsafe_of = playbackState->of;
     }
 
     int target = len * 2;
