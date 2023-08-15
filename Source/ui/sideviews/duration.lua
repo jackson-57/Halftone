@@ -4,7 +4,7 @@ local pd_input <const> = playdate.inputHandlers
 
 local font <const> = pd_gfx.getFont(pd_gfx.font.kVariantBold)
 
-local seek_hold_delay <const> = 500
+local seek_hold_delay <const> = 300
 local seek_amount <const> = 2
 
 class("DurationSideview").extends(BarSideview)
