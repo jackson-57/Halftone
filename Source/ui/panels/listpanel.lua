@@ -35,7 +35,9 @@ local function addKeyRepeat(self, callback)
 end
 
 local function removeKeyRepeat(self)
-    self.keyTimer:remove()
+    if self.keyTimer then
+        self.keyTimer:remove()
+    end
 end
 
 function ListPanel:init()
