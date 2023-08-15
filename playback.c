@@ -110,15 +110,24 @@ void playback_terminate(void)
         soundSource = NULL;
     }
 
-    if (playbackState.of != NULL)
+    if (playbackState.of != NULL && playbackState.of == playbackState.unsafe_of)
     {
         op_free(playbackState.of);
         playbackState.of = NULL;
-    }
-
-    if (playbackState.unsafe_of != NULL)
-    {
-        op_free(playbackState.unsafe_of);
         playbackState.unsafe_of = NULL;
+    }
+    else
+    {
+        if (playbackState.of != NULL)
+        {
+            op_free(playbackState.of);
+            playbackState.of = NULL;
+        }
+
+        if (playbackState.unsafe_of != NULL)
+        {
+            op_free(playbackState.unsafe_of);
+            playbackState.unsafe_of = NULL;
+        }
     }
 }
