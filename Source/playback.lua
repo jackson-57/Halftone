@@ -31,6 +31,8 @@ function play_next()
     if queue[queue_position + 1] then
         queue_position += 1
         play_track(queue[queue_position])
+    else
+        toggle_playing(false)
     end
 end
 
