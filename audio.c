@@ -78,11 +78,11 @@ int get_buffered_samples(Buffer *buffer, PlaybackState *playbackState, int len, 
 
 int refill_opus(Buffer *buffer, PlaybackState *playbackState, int offset)
 {
-    if (playbackState->of == NULL)
+    if (playbackState->current_of == NULL)
     {
         return -1;
     }
-    return op_read_stereo(playbackState->of, buffer->buf + offset, buffer->size - offset);
+    return op_read_stereo(playbackState->current_of, buffer->buf + offset, buffer->size - offset);
 }
 
 int refill_speex(Buffer *buffer, PlaybackState *playbackState, int offset)
@@ -95,11 +95,6 @@ int refill_speex(Buffer *buffer, PlaybackState *playbackState, int offset)
     // call for next track if no samples returned
     if (in_res == 0)
     {
-        // free current
-        op_free(playbackState->of);
-        playbackState->of = NULL;
-//        pd->sound->removeSource(soundSource);
-
         const char* outerr;
         int err = pd->lua->callFunction("play_next", 0, &outerr);
         if (err != 1)
@@ -126,6 +121,14 @@ int AudioHandler(void *context, int16_t *left, int16_t *right, int len) {
     // Do not use the audio callback for system tasks:
     //   spend as little time here as possible
     // TODO: Move decoding out of callback
+
+    if (playbackState->new_of)
+    {
+        OggOpusFile *old_of = playbackState->current_of;
+        playbackState->current_of = playbackState->new_of;
+        playbackState->new_of = NULL;
+        op_free(old_of);
+    }
 
     int target = len * 2;
 
