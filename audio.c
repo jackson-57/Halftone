@@ -166,6 +166,7 @@ int audio_init(lua_State* L)
 {
     if (audioState != NULL)
     {
+        pd->system->error("Audio init called with existing state. Something has gone disastrously wrong.");
         return 0;
     }
 
@@ -199,4 +200,29 @@ int audio_init(lua_State* L)
     audioState->spx_buf = spx_buf;
 
     return 0;
+}
+
+void audio_terminate(void)
+{
+    // In theory, variables belonging to dynamically allocated structs don't need to be set to null, once freed
+    if (audioState != NULL)
+    {
+        if (audioState->spx_state != NULL)
+        {
+            speex_resampler_destroy(audioState->spx_state);
+        }
+
+        if (audioState->op_buf != NULL)
+        {
+            pd->system->realloc(audioState->op_buf, 0);
+        }
+
+        if (audioState->spx_buf != NULL)
+        {
+            pd->system->realloc(audioState->spx_buf, 0);
+        }
+
+        pd->system->realloc(audioState, 0);
+        audioState = NULL;
+    }
 }

@@ -101,3 +101,24 @@ int seek_playback(lua_State *L)
 
     return 0;
 }
+
+void playback_terminate(void)
+{
+    if (soundSource != NULL)
+    {
+        pd->sound->removeSource(soundSource);
+        soundSource = NULL;
+    }
+
+    if (playbackState.current_of != NULL)
+    {
+        op_free(playbackState.current_of);
+        playbackState.current_of = NULL;
+    }
+
+    if (playbackState.new_of != NULL)
+    {
+        op_free(playbackState.new_of);
+        playbackState.new_of = NULL;
+    }
+}
