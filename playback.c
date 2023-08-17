@@ -32,11 +32,8 @@ int set_playback(lua_State* L)
         return 0;
     }
 
-    // Setup audio source if not open
-    if (playback_state.sound_source == NULL)
-    {
-        playback_state.sound_source = pd->sound->addSource(audio_render, NULL, 1);
-    }
+    // Enable playback
+    playback_state.playing = 1;
 
     return 0;
 }
@@ -48,7 +45,7 @@ int get_playback_status(lua_State *L)
         return 0;
     }
 
-    // elapsed time
+    // Elapsed time
     pd->lua->pushInt((int)(op_pcm_tell(playback_state.opus_file) / OPUSFILE_RATE));
     return 1;
 }
@@ -60,7 +57,7 @@ int toggle_playback(lua_State *L)
         return 0;
     }
 
-    int currently_playing = playback_state.sound_source != NULL;
+    int currently_playing = playback_state.playing;
 
     // Toggle playback if desired state isn't given
     int playing = !currently_playing;
@@ -71,12 +68,11 @@ int toggle_playback(lua_State *L)
 
     if (playing && !currently_playing)
     {
-        playback_state.sound_source = pd->sound->addSource(audio_render, NULL, 1);
+        playback_state.playing = 1;
     }
     else if (!playing && currently_playing)
     {
-        pd->sound->removeSource(playback_state.sound_source);
-        playback_state.sound_source = NULL;
+        playback_state.playing = 0;
     }
 
     pd->lua->pushBool(playing);
