@@ -1,3 +1,3 @@
 #include <opusfile.h>
 
-extern OpusFileCallbacks cb;
+extern OpusFileCallbacks op_callbacks;

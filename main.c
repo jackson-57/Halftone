@@ -8,7 +8,7 @@
 // TODO: consistent formatting/naming
 
 PlaydateAPI* pd;
-OpusFileCallbacks cb = {NULL};
+OpusFileCallbacks op_callbacks = {NULL};
 
 __attribute__((unused)) int eventHandler(PlaydateAPI* playdate, PDSystemEvent event, uint32_t arg)
 {
@@ -22,36 +22,35 @@ __attribute__((unused)) int eventHandler(PlaydateAPI* playdate, PDSystemEvent ev
                 char* name;
             };
             struct LUA_C_FUNCTION LUA_C_FUNCTIONS[] = {
-                {set_playback,        "set_playback"},
+                {set_playback, "set_playback"},
                 {get_playback_status, "get_playback_status"},
                 {toggle_playback, "toggle_playback"},
                 {seek_playback, "seek_playback"},
                 {parse_metadata, "parse_metadata"},
                 {process_art, "process_art"},
-                {audio_init,          "audio_init"}
+                {audio_init, "audio_init"},
+                {audio_update, "audio_update"}
             };
             const char* err;
-            for (int i = 0; i < 7; ++i)
+            for (int i = 0; i < 8; ++i)
             {
                 if ( !pd->lua->addFunction(LUA_C_FUNCTIONS[i].function, LUA_C_FUNCTIONS[i].name, &err) )
                     pd->system->logToConsole("%s:%i: addFunction failed, %s", __FILE__, __LINE__, err);
             }
 
             // setup opusfile callbacks
-            cb.read = (op_read_func) pd->file->read;
-            cb.seek = (op_seek_func) pd->file->seek;
-            cb.tell = (op_tell_func) pd->file->tell;
-            cb.close = pd->file->close;
+            op_callbacks.read = (op_read_func) pd->file->read;
+            op_callbacks.seek = (op_seek_func) pd->file->seek;
+            op_callbacks.tell = (op_tell_func) pd->file->tell;
+            op_callbacks.close = pd->file->close;
             break;
         case kEventTerminate:
             pd->system->logToConsole("Terminating");
-            playback_terminate();
             audio_terminate();
             break;
         default:
             break;
     }
-
 
     return 0;
 }

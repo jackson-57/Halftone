@@ -45,6 +45,7 @@ audio_init()
 init_ui(index)
 
 function playdate.update()
+    audio_update()
     update_ui()
     playdate.timer:updateTimers()
 end

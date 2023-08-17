@@ -13,16 +13,16 @@ void floyd_steinberg_dither(unsigned char *input, int w, int h)
         for (int x = 0; x < w; x++)
         {
             // Get the current pixel value
-            unsigned char oldPixel = input[y * w + x];
+            unsigned char old_pixel = input[y * w + x];
 
             // Quantize the pixel value
-            unsigned char newPixel = (oldPixel < 128) ? 0 : 255;
+            unsigned char new_pixel = (old_pixel < 128) ? 0 : 255;
 
             // Set the new pixel value
-            input[y * w + x] = newPixel;
+            input[y * w + x] = new_pixel;
 
             // Calculate the quantization error
-            int error = oldPixel - newPixel;
+            int error = old_pixel - new_pixel;
 
             // Distribute the error to neighboring pixels
             if (x + 1 < w)

@@ -4,6 +4,8 @@
 #include "shared_opusfile.h"
 #include "shared_audio.h"
 #include <speex/speex_resampler.h>
+#include <speex/speex_buffer.h>
+#include <assert.h>
 
 #define OPUS_BUFFER_SIZE 11520
 #define SPEEX_BUFFER_SIZE 1024
@@ -11,149 +13,105 @@
 
 // Buffer struct
 typedef struct {
+    // Interleaved samples
     int16_t *buf;
+    // Total sample capacity
     int size;
+    // Number opus_file samples
     int count;
+    // Start opus_file samples
     int pos;
 } Buffer;
 
-// Audio engine state
-typedef struct {
-    SpeexResamplerState *spx_state;
-    Buffer *op_buf;
-    Buffer *spx_buf;
-} AudioState;
-
-typedef int (*refill_buffer)(Buffer*, PlaybackState*, int);
-
 // Globals
-AudioState *audioState = NULL;
+SpeexResamplerState *speex_state = NULL;
+SpeexBuffer *speex_ring_buffer = NULL;
+int16_t *speex_linear_buffer = NULL;
+int16_t *audio_render_buffer = NULL;
+Buffer opus_buffer = {NULL, OPUS_BUFFER_SIZE, 0, 0};
+PlaybackState playback_state = {NULL};
 
-int get_buffered_samples(Buffer *buffer, PlaybackState *playbackState, int len, refill_buffer refill)
+int audio_update(lua_State* L)
 {
-    // todo: check if length fits in buffer
-    // todo: memcpy or memmove?
-    // refill if samples in buffer is less than requested amount
-    if (len > buffer->count)
+    if (playback_state.sound_source == NULL)
     {
-        // move remaining data to beginning
-        // destination, source
-        memcpy(buffer->buf, buffer->buf + buffer->pos, buffer->size);
-        buffer->pos = 0;
-
-        // get samples
-        // todo: error/zero handling, properly shut down
-        do {
-            int offset = buffer->pos + buffer->count;
-
-            int result = refill(buffer, playbackState, offset);
-
-            if (result > 0)
-            {
-                buffer->count += result * 2;
-            }
-            else
-            {
-                break;
-            }
-        }
-        while (len > buffer->count);
-    }
-
-    // return
-    if (buffer->count > len)
-    {
-        buffer->count -= len;
-        buffer->pos += len;
-        return len;
-    }
-    else
-    {
-        int temp = buffer->count;
-        buffer->count = 0;
-        buffer->pos += temp;
-        return temp;
-    }
-}
-
-int refill_opus(Buffer *buffer, PlaybackState *playbackState, int offset)
-{
-    if (playbackState->unsafe_of == NULL)
-    {
-        return -1;
-    }
-    return op_read_stereo(playbackState->unsafe_of, buffer->buf + offset, buffer->size - offset);
-}
-
-int refill_speex(Buffer *buffer, PlaybackState *playbackState, int offset)
-{
-    int available = buffer->size - offset;
-
-    // get opus samples
-    int in_res = get_buffered_samples(audioState->op_buf, playbackState, available, refill_opus);
-
-    // call for next track if no samples returned
-    if (in_res == 0)
-    {
-        const char* outerr;
-        int err = pd->lua->callFunction("play_next", 0, &outerr);
-        if (err != 1)
-        {
-            pd->system->error("Lua error while calling for next track: %s", outerr);
-        }
-
         return 0;
     }
 
-    int16_t *input = audioState->op_buf->buf + audioState->op_buf->pos - in_res;
-
-    uint32_t in_len = in_res / 2;
-    uint32_t result = available / 2;
-    speex_resampler_process_interleaved_int(audioState->spx_state, input, &in_len, buffer->buf + offset, &result);
-    return (int)result;
-}
-
-// Audio callback routine
-int AudioHandler(void *context, int16_t *left, int16_t *right, int len) {
-    // Resolve playbackState fields as needed
-    PlaybackState *playbackState = (PlaybackState*) context;
-
-    // Do not use the audio callback for system tasks:
-    //   spend as little time here as possible
-    // TODO: Move decoding out of callback
-
-    if (playbackState->unsafe_of != playbackState->of)
+    // refill opus buffer if empty
+    if (opus_buffer.count == 0)
     {
-        op_free(playbackState->unsafe_of);
-        playbackState->unsafe_of = playbackState->of;
+        if (playback_state.opus_file == NULL)
+        {
+            return 0;
+        }
+
+        int samples = op_read_stereo(playback_state.opus_file, opus_buffer.buf, opus_buffer.size);
+
+        if (samples > 0)
+        {
+            opus_buffer.pos = 0;
+            opus_buffer.count = samples * 2;
+        }
+        else if (samples == 0)
+        {
+            const char* outerr;
+            int err = pd->lua->callFunction("play_next", 0, &outerr);
+            if (err != 1)
+            {
+                pd->system->error("Lua error while calling for next track: %s", outerr);
+            }
+        }
+        else
+        {
+            pd->system->error("Opus error while decoding: %i", samples);
+            op_free(playback_state.opus_file);
+            playback_state.opus_file = NULL;
+            pd->sound->removeSource(playback_state.sound_source);
+        }
+
+        // skip cycle
+        return 0;
     }
 
-    int target = len * 2;
+    // refill speex output buffer if less than half full
+    int speex_samples_available = speex_buffer_get_available(speex_ring_buffer) / (int)sizeof(int16_t);
+    if (speex_samples_available < SPEEX_BUFFER_SIZE / 2)
+    {
+        int16_t *in = opus_buffer.buf + opus_buffer.pos;
+        uint32_t in_len = opus_buffer.count / 2;
+        uint32_t out_len = SPEEX_BUFFER_SIZE - speex_samples_available / 2;
+        speex_resampler_process_interleaved_int(speex_state, in, &in_len, speex_linear_buffer, &out_len);
 
-    // get samples
-    int samples = get_buffered_samples(audioState->spx_buf, playbackState, target, refill_speex);
-    int16_t *buffer = audioState->spx_buf->buf + audioState->spx_buf->pos - samples;
+        if (in_len > 0)
+        {
+            opus_buffer.count -= (int)in_len * 2;
+            opus_buffer.pos -= (int)in_len * 2;
+        }
 
-//    // if no samples read or an error, stop after processing
-//    if (samples <= 0) {
-////        if (result < 0)
-////        {
-////            pd->system->error("Opus error while decoding: %i", result);
-////        }
-//
-//        op_free(playbackState->of);
-//        pd->sound->removeSource(playbackState->source);
-//        return 0;
-//    }
+        if (out_len > 0)
+        {
+            speex_buffer_write(speex_ring_buffer, speex_linear_buffer, (int)out_len * 2 * (int)sizeof(int16_t));
+        }
+    }
 
+    return 0;
+}
+
+// Playdate audio rendering callback. Happens on a separate thread.
+int audio_render(void *context, int16_t *left, int16_t *right, int len) {
     // https://stackoverflow.com/q/14567786
     // Deinterleave stream and put into buffers
-    int i, j;
-    int half_samples = samples / 2;
-    for (i = 0, j = 0; i < half_samples; i++, j += 2)
+
+    assert(len == (AUDIO_FRAMES_PER_CYCLE / 2));
+
+    int target_data = (len * 2) * (int)sizeof(int16_t);
+    int speex_data_read = speex_buffer_read(speex_ring_buffer, audio_render_buffer, target_data);
+    int half_samples = (speex_data_read / (int)sizeof(int16_t)) / 2;
+    for (int i = 0, j = 0; i < half_samples; i++, j += 2)
     {
-        left[i] = buffer[j];
-        right[i] = buffer[j+1];
+        left[i] = audio_render_buffer[j];
+        right[i] = audio_render_buffer[j+1];
     }
 
     // Audio data is meaningful, so return 1
@@ -162,7 +120,7 @@ int AudioHandler(void *context, int16_t *left, int16_t *right, int len) {
 
 int audio_init(lua_State* L)
 {
-    if (audioState != NULL)
+    if (speex_state != NULL)
     {
         pd->system->error("Audio init called with existing state. Something has gone disastrously wrong.");
         return 0;
@@ -170,57 +128,66 @@ int audio_init(lua_State* L)
 
     // setup resampler
     int speex_err;
-    SpeexResamplerState* spx = speex_resampler_init(2, OPUSFILE_RATE, PLAYDATE_RATE, SPEEX_QUALITY, &speex_err);
+    speex_state = speex_resampler_init(2, OPUSFILE_RATE, PLAYDATE_RATE, SPEEX_QUALITY, &speex_err);
     if (speex_err != 0)
     {
         pd->system->error("Speex error while initializing: %i", speex_err);
         return -1;
     }
 
-    // create opus buffer
-    Buffer *op_buf = pd->system->realloc(NULL, sizeof(Buffer));
-    op_buf->buf = pd->system->realloc(NULL, OPUS_BUFFER_SIZE * sizeof(Buffer));
-    op_buf->size = OPUS_BUFFER_SIZE;
-    op_buf->count = 0;
-    op_buf->pos = 0;
-
-    // create speex buffer
-    Buffer *spx_buf = pd->system->realloc(NULL, sizeof(Buffer));
-    spx_buf->buf = pd->system->realloc(NULL, SPEEX_BUFFER_SIZE * sizeof(Buffer));
-    spx_buf->size = SPEEX_BUFFER_SIZE;
-    spx_buf->count = 0;
-    spx_buf->pos = 0;
-
-    // create audio state
-    audioState = pd->system->realloc(NULL, sizeof(AudioState));
-    audioState->spx_state = spx;
-    audioState->op_buf = op_buf;
-    audioState->spx_buf = spx_buf;
+    // setup buffers
+    speex_ring_buffer = speex_buffer_init(SPEEX_BUFFER_SIZE * sizeof(int16_t));
+    speex_linear_buffer = pd->system->realloc(NULL, SPEEX_BUFFER_SIZE * sizeof(int16_t));
+    audio_render_buffer = pd->system->realloc(NULL, AUDIO_FRAMES_PER_CYCLE * sizeof(int16_t));
+    opus_buffer.buf = pd->system->realloc(NULL, OPUS_BUFFER_SIZE * sizeof(int16_t));
 
     return 0;
 }
 
 void audio_terminate(void)
 {
-    // In theory, variables belonging to dynamically allocated structs don't need to be set to null, once freed
-    if (audioState != NULL)
+    if (speex_state != NULL)
     {
-        if (audioState->spx_state != NULL)
-        {
-            speex_resampler_destroy(audioState->spx_state);
-        }
+        speex_resampler_destroy(speex_state);
+        speex_state = NULL;
+    }
 
-        if (audioState->op_buf != NULL)
-        {
-            pd->system->realloc(audioState->op_buf, 0);
-        }
+    if (speex_ring_buffer != NULL)
+    {
+        speex_buffer_destroy(speex_ring_buffer);
+        speex_ring_buffer = NULL;
+    }
 
-        if (audioState->spx_buf != NULL)
-        {
-            pd->system->realloc(audioState->spx_buf, 0);
-        }
+    if (speex_linear_buffer != NULL)
+    {
+        pd->system->realloc(speex_linear_buffer, 0);
+        speex_linear_buffer = NULL;
+    }
 
-        pd->system->realloc(audioState, 0);
-        audioState = NULL;
+    if (audio_render_buffer != NULL)
+    {
+        pd->system->realloc(audio_render_buffer, 0);
+        audio_render_buffer = NULL;
+    }
+
+    if (opus_buffer.buf != NULL)
+    {
+        pd->system->realloc(opus_buffer.buf, 0);
+        opus_buffer.buf = NULL;
+    }
+
+    opus_buffer.count = 0;
+    opus_buffer.pos = 0;
+
+    if (playback_state.opus_file != NULL)
+    {
+        op_free(playback_state.opus_file);
+        playback_state.opus_file = NULL;
+    }
+
+    if (playback_state.sound_source != NULL)
+    {
+        pd->sound->removeSource(playback_state.sound_source);
+        playback_state.sound_source = NULL;
     }
 }

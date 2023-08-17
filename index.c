@@ -10,26 +10,26 @@
 int parse_metadata(lua_State* L)
 {
     const char* path = pd->lua->getArgString(1);
-    int stack_count = 0;
 
     // Open file
     SDFile *file = pd->file->open(path, kFileReadData);
     if (file == NULL)
     {
         pd->system->error("Could not open file (%s)", path);
-        return stack_count;
+        return 0;
     }
     int err;
-    OggOpusFile* of = op_open_callbacks(file, &cb, NULL, 0, &err);
+    OggOpusFile* opus_file = op_open_callbacks(file, &op_callbacks, NULL, 0, &err);
     if (err != 0)
     {
         pd->system->error("Opus error while opening to index: %i (%s)", err, path);
         pd->file->close(file);
-        return stack_count;
+        return 0;
     }
 
     // Index
-    ogg_int64_t samples = op_pcm_total(of, -1);
+    int stack_count = 0;
+    ogg_int64_t samples = op_pcm_total(opus_file, -1);
     if (samples > 0)
     {
         // duration
@@ -42,10 +42,10 @@ int parse_metadata(lua_State* L)
     }
     stack_count++;
 
-    const OpusTags* opusTags = op_tags(of, -1);
-    if (opusTags == NULL)
+    const OpusTags* opus_tags = op_tags(opus_file, -1);
+    if (opus_tags == NULL)
     {
-        op_free(of);
+        op_free(opus_file);
         return stack_count;
     }
 
@@ -53,118 +53,114 @@ int parse_metadata(lua_State* L)
     const char* OPUS_TAGS_LIST[] = {"TITLE", "ALBUM", "ARTIST", "ALBUMARTIST", "DATE", "TRACKNUMBER"};
     for (int i = 0; i < 6; ++i)
     {
-        const char *tagValue = opus_tags_query(opusTags, OPUS_TAGS_LIST[i], 0);
-        if (tagValue == NULL)
+        const char *tag_value = opus_tags_query(opus_tags, OPUS_TAGS_LIST[i], 0);
+        if (tag_value == NULL)
         {
             pd->lua->pushNil();
         }
         else
         {
-            pd->lua->pushString(tagValue);
+            pd->lua->pushString(tag_value);
         }
         stack_count++;
     }
 
-    op_free(of);
+    op_free(opus_file);
     return stack_count;
 }
 
 int process_art(lua_State *L)
 {
     const char* path = pd->lua->getArgString(1);
-    int stack_count = 0;
 
     // Open file
     SDFile *file = pd->file->open(path, kFileReadData);
     if (file == NULL)
     {
         pd->system->error("Could not open file (%s)", path);
-        return stack_count;
+        return 0;
     }
     int err;
-    OggOpusFile* of = op_open_callbacks(file, &cb, NULL, 0, &err);
+    OggOpusFile* opus_file = op_open_callbacks(file, &op_callbacks, NULL, 0, &err);
     if (err != 0)
     {
         pd->system->error("Opus error while opening to index image: %i (%s)", err, path);
         pd->file->close(file);
-        return stack_count;
+        return 0;
     }
 
-    const OpusTags* opusTags = op_tags(of, -1);
-    if (opusTags == NULL)
+    const OpusTags* opus_tags = op_tags(opus_file, -1);
+    if (opus_tags == NULL)
     {
-        op_free(of);
-        return stack_count;
+        op_free(opus_file);
+        return 0;
     }
 
-    // TODO: Check if album art is needed
-    const char *pictureBlock = opus_tags_query(opusTags, "METADATA_BLOCK_PICTURE", 0);
-    if (pictureBlock == NULL)
+    const char *picture_block = opus_tags_query(opus_tags, "METADATA_BLOCK_PICTURE", 0);
+    if (picture_block == NULL)
     {
-        op_free(of);
-        return stack_count;
+        op_free(opus_file);
+        return 0;
     }
-    OpusPictureTag pictureTag;
-    err = opus_picture_tag_parse(&pictureTag, pictureBlock);
+    OpusPictureTag picture_tag;
+    err = opus_picture_tag_parse(&picture_tag, picture_block);
     if (err != 0)
     {
         pd->system->error("Error parsing image data: %i (%s)", err, path);
-        op_free(of);
-        return stack_count;
+        op_free(opus_file);
+        return 0;
     }
 
-    if (pictureTag.format != OP_PIC_FORMAT_JPEG && pictureTag.format != OP_PIC_FORMAT_PNG && pictureTag.format != OP_PIC_FORMAT_GIF)
+    if (picture_tag.format != OP_PIC_FORMAT_JPEG && picture_tag.format != OP_PIC_FORMAT_PNG && picture_tag.format != OP_PIC_FORMAT_GIF)
     {
         pd->system->logToConsole("Unknown image type (%s)", path);
-        opus_picture_tag_clear(&pictureTag);
-        op_free(of);
-        return stack_count;
+        opus_picture_tag_clear(&picture_tag);
+        op_free(opus_file);
+        return 0;
     }
 
     int x, y, channels;
-    unsigned char *originalImage = stbi_load_from_memory(pictureTag.data, (int)pictureTag.data_length, &x, &y, &channels, 1);
-    opus_picture_tag_clear(&pictureTag);
-    if (originalImage == NULL)
+    unsigned char *original_image = stbi_load_from_memory(picture_tag.data, (int)picture_tag.data_length, &x, &y, &channels, 1);
+    opus_picture_tag_clear(&picture_tag);
+    op_free(opus_file);
+    if (original_image == NULL)
     {
         pd->system->error("Error reading image data: %s (%s)", stbi_failure_reason(), path);
-        op_free(of);
-        return stack_count;
+        return 0;
     }
 
+    int stack_count = 0;
     const int art_sizes_count = pd->lua->getArgCount() - 1;
     for (int i = 0; i < art_sizes_count; ++i)
     {
         // arguments start at 1, and we've already gotten first argument
         int cover_size = pd->lua->getArgInt(i + 2);
 
-        unsigned char* newImage = pd->system->realloc(NULL, sizeof(unsigned char) * cover_size * cover_size);
-        if (newImage == NULL)
+        unsigned char* new_image = pd->system->realloc(NULL, sizeof(unsigned char) * cover_size * cover_size);
+        if (new_image == NULL)
         {
             pd->system->error("Error allocating image memory");
-            stbi_image_free(originalImage);
-            op_free(of);
+            stbi_image_free(original_image);
             return stack_count;
         }
         
-        err = stbir_resize_uint8(originalImage, x, y, 0, newImage, cover_size, cover_size, 0, 1);
+        err = stbir_resize_uint8(original_image, x, y, 0, new_image, cover_size, cover_size, 0, 1);
         if (err == 0)
         {
             pd->system->error("Error resizing image");
-            stbi_image_free(originalImage);
-            pd->system->realloc(newImage, 0);
-            op_free(of);
+            stbi_image_free(original_image);
+            pd->system->realloc(new_image, 0);
             return stack_count;
         }
 
-        floyd_steinberg_dither(newImage, cover_size, cover_size);
-        LCDBitmap *bitmap = pack_bitmap(pd, newImage, cover_size, cover_size);
-        pd->system->realloc(newImage, 0);
+        floyd_steinberg_dither(new_image, cover_size, cover_size);
+        LCDBitmap *bitmap = pack_bitmap(pd, new_image, cover_size, cover_size);
+        pd->system->realloc(new_image, 0);
 
         pd->lua->pushBitmap(bitmap);
         stack_count++;
     }
 
-    stbi_image_free(originalImage);
-    op_free(of);
+    stbi_image_free(original_image);
     return stack_count;
 }

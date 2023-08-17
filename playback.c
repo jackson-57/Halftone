@@ -5,18 +5,16 @@
 #include "shared_audio.h"
 
 // Globals
-PlaybackState playbackState = {NULL};
-SoundSource *soundSource = NULL;
+extern PlaybackState playback_state;
 
 int set_playback(lua_State* L)
 {
     const char *path = pd->lua->getArgString(1);
 
-    // Do not continue if new file is already loaded
-    if (playbackState.of != playbackState.unsafe_of)
+    // Close old file if open
+    if (playback_state.opus_file != NULL)
     {
-        pd->system->error("New Opus file is already loaded.");
-        return 0;
+        op_free(playback_state.opus_file);
     }
 
     // Open file
@@ -27,7 +25,7 @@ int set_playback(lua_State* L)
         return 0;
     }
     int err;
-    playbackState.of = op_open_callbacks(file, &cb, NULL, 0, &err);
+    playback_state.opus_file = op_open_callbacks(file, &op_callbacks, NULL, 0, &err);
     if (err != 0)
     {
         pd->system->error("Opus error while opening: %i", err);
@@ -35,9 +33,9 @@ int set_playback(lua_State* L)
     }
 
     // Setup audio source if not open
-    if (soundSource == NULL)
+    if (playback_state.sound_source == NULL)
     {
-        soundSource = pd->sound->addSource(AudioHandler, &playbackState, 1);
+        playback_state.sound_source = pd->sound->addSource(audio_render, NULL, 1);
     }
 
     return 0;
@@ -45,24 +43,24 @@ int set_playback(lua_State* L)
 
 int get_playback_status(lua_State *L)
 {
-    if (playbackState.of == NULL)
+    if (playback_state.opus_file == NULL)
     {
         return 0;
     }
 
     // elapsed time
-    pd->lua->pushInt((int)(op_pcm_tell(playbackState.of) / OPUSFILE_RATE));
+    pd->lua->pushInt((int)(op_pcm_tell(playback_state.opus_file) / OPUSFILE_RATE));
     return 1;
 }
 
 int toggle_playback(lua_State *L)
 {
-    if (playbackState.of == NULL)
+    if (playback_state.opus_file == NULL)
     {
         return 0;
     }
 
-    int currently_playing = soundSource != NULL;
+    int currently_playing = playback_state.sound_source != NULL;
 
     // Toggle playback if desired state isn't given
     int playing = !currently_playing;
@@ -73,12 +71,12 @@ int toggle_playback(lua_State *L)
 
     if (playing && !currently_playing)
     {
-        soundSource = pd->sound->addSource(AudioHandler, &playbackState, 1);
+        playback_state.sound_source = pd->sound->addSource(audio_render, NULL, 1);
     }
     else if (!playing && currently_playing)
     {
-        pd->sound->removeSource(soundSource);
-        soundSource = NULL;
+        pd->sound->removeSource(playback_state.sound_source);
+        playback_state.sound_source = NULL;
     }
 
     pd->lua->pushBool(playing);
@@ -87,47 +85,17 @@ int toggle_playback(lua_State *L)
 
 int seek_playback(lua_State *L)
 {
-    if (playbackState.of == NULL)
+    if (playback_state.opus_file == NULL)
     {
         return 0;
     }
 
     int seconds = pd->lua->getArgInt(1);
-    int err = op_pcm_seek(playbackState.of, seconds * OPUSFILE_RATE);
+    int err = op_pcm_seek(playback_state.opus_file, seconds * OPUSFILE_RATE);
     if (err != 0)
     {
         pd->system->error("Opus error while seeking: %i", err);
     }
 
     return 0;
-}
-
-void playback_terminate(void)
-{
-    if (soundSource != NULL)
-    {
-        pd->sound->removeSource(soundSource);
-        soundSource = NULL;
-    }
-
-    if (playbackState.of != NULL && playbackState.of == playbackState.unsafe_of)
-    {
-        op_free(playbackState.of);
-        playbackState.of = NULL;
-        playbackState.unsafe_of = NULL;
-    }
-    else
-    {
-        if (playbackState.of != NULL)
-        {
-            op_free(playbackState.of);
-            playbackState.of = NULL;
-        }
-
-        if (playbackState.unsafe_of != NULL)
-        {
-            op_free(playbackState.unsafe_of);
-            playbackState.unsafe_of = NULL;
-        }
-    }
 }

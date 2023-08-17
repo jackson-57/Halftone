@@ -1,8 +1,8 @@
 #include <opusfile.h>
 
-int AudioHandler(void *context, int16_t *left, int16_t *right, int len);
+int audio_render(void *context, int16_t *left, int16_t *right, int len);
 
 typedef struct {
-    OggOpusFile *of;
-    OggOpusFile *unsafe_of;
+    OggOpusFile *opus_file;
+    SoundSource *sound_source;
 } PlaybackState;
