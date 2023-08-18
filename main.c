@@ -4,8 +4,6 @@
 #include "playback.h"
 #include "audio.h"
 
-// TODO: malloc vs pd->system->realloc?
-
 PlaydateAPI* pd;
 OpusFileCallbacks op_callbacks = {NULL};
 

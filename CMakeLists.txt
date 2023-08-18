@@ -35,8 +35,14 @@ if (TOOLCHAIN STREQUAL "armgcc")
 	set(CMAKE_EXE_LINKER_FLAGS "--specs=nosys.specs" CACHE INTERNAL "")
 
 	add_executable(${PLAYDATE_GAME_DEVICE} main.c playback.c audio.c index.c image.c)
+	# device is missing calloc implementation
+	target_sources(${PLAYDATE_GAME_DEVICE} PRIVATE buildsupport/calloc.c)
+
 else()
 	add_library(${PLAYDATE_GAME_NAME} SHARED main.c playback.c audio.c index.c image.c)
+	# reimplements malloc, free, calloc, etc. with the Playdate API realloc to enable Malloc Log integration
+	# only works on macOS, see https://devforum.play.date/t/c-api-why-isnt-setup-c-included-in-simulator-builds/12680/2
+#	target_sources(${PLAYDATE_GAME_NAME} PRIVATE ${SDK}/C_API/buildsupport/setup.c buildsupport/calloc.c)
 endif()
 
 
