@@ -31,12 +31,16 @@ set(PLAYDATE_GAME_DEVICE pdaudio_DEVICE)
 project(${PLAYDATE_GAME_NAME} C ASM)
 
 if (TOOLCHAIN STREQUAL "armgcc")
+	# hack https://devforum.play.date/t/c-api-converting-string-to-float/10097/7
+	set(CMAKE_EXE_LINKER_FLAGS "--specs=nosys.specs" CACHE INTERNAL "")
+
 	add_executable(${PLAYDATE_GAME_DEVICE} main.c playback.c audio.c index.c image.c)
 else()
 	add_library(${PLAYDATE_GAME_NAME} SHARED main.c playback.c audio.c index.c image.c)
 endif()
 
-include(cmake/playdate_game.cmake)
+
+include(buildsupport/playdate_game.cmake)
 
 set(OP_DISABLE_HTTP ON)
 set(OP_DISABLE_DOCS ON)

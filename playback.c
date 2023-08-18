@@ -29,6 +29,7 @@ int set_playback(lua_State* L)
     if (err != 0)
     {
         pd->system->error("Opus error while opening: %i", err);
+        pd->file->close(file);
         return 0;
     }
 

@@ -5,12 +5,11 @@
 #include "audio.h"
 
 // TODO: malloc vs pd->system->realloc?
-// TODO: consistent formatting/naming
 
 PlaydateAPI* pd;
 OpusFileCallbacks op_callbacks = {NULL};
 
-__attribute__((unused)) int eventHandler(PlaydateAPI* playdate, PDSystemEvent event, uint32_t arg)
+int eventHandler(PlaydateAPI* playdate, PDSystemEvent event, uint32_t arg)
 {
     switch (event)
     {
