@@ -39,7 +39,7 @@ typedef struct
     // Index of block to write
     int write_index;
     // Number of full blocks
-    int block_count;
+    _Atomic int block_count;
 } CircularBuffer;
 
 // Globals
