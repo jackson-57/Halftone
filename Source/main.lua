@@ -6,6 +6,7 @@ import "ui/ui"
 
 -- profiling
 local pd_file <const> = playdate.file
+local pd_meta <const> = playdate.metadata
 
 function log_time(name)
     local time = playdate.getElapsedTime()
@@ -27,7 +28,7 @@ function log_file(str, reset)
     end
 end
 
-log_file("pdaudio alpha v1", true)
+log_file(pd_meta.name .. " " .. pd_meta.version .. " (" .. pd_meta.buildNumber .. ")", true)
 
 -- setup
 playdate.setCrankSoundsDisabled(true)

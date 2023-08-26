@@ -1,6 +1,6 @@
-name=pdaudio alpha
+name=Halftone Alpha
 author=Jackson_57
-description=A proper music player for the Playdate
-bundleID=dev.jackson57.pdaudio
+description=A lightweight, capable music player for the Playdate
+bundleID=dev.jackson57.halftone
 version=0.1
 buildNumber=1
