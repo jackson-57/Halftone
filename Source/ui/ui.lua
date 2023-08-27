@@ -47,6 +47,8 @@ function update_ui()
 end
 
 function set_track_ui(track)
+    if sideview == nil or playback_panel == nil then return end
+
     playback_panel.track = track
     sideview.duration.track = track
 
@@ -57,6 +59,8 @@ function set_track_ui(track)
 end
 
 function toggle_playing_ui(playing)
+    if sideview == nil then return end
+
     if playing then
         sideview.duration.update_timer:start()
     else
