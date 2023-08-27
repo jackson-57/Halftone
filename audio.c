@@ -112,8 +112,8 @@ int audio_update(lua_State* L)
                     }
                     else if (!playback_state.playing)
                     {
-                        // Playback has ended, return
-                        return 0;
+                        // Playback has ended, break
+                        break;
                     }
 
                     waiting_for_next = 1;

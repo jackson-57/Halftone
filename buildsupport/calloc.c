@@ -1,5 +1,6 @@
 #include <pd_api.h>
 
+// https://devforum.play.date/t/a-list-of-helpful-libraries-and-code/221/85
 #if TARGET_PLAYDATE
 void* _calloc_r(struct _reent* _REENT, size_t nb_of_items, size_t item_size)
 #else
