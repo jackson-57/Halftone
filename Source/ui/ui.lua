@@ -4,8 +4,8 @@ import "CoreLibs/sprites"
 import "CoreLibs/object"
 
 import "consts"
+import "seeking"
 
-import "sideview"
 import "sideviews/barsideview"
 import "sideviews/art"
 import "sideviews/duration"
@@ -21,13 +21,12 @@ import "panels/settings"
 
 local pd_gfx <const> = playdate.graphics
 local pd_sprite <const> = pd_gfx.sprite
+local ui <const> = UI
 
-local playback_panel = nil
-local sideview = nil
-
-function init_ui(index)
-    playback_panel = NowPlaying()
-    sideview = Sideview()
+function ui.init(index)
+    ui.artsideview = ArtSideview()
+    ui.playback_panel = NowPlaying()
+    ui.durationsideview = DurationSideview()
     Menu(index)
 
     playdate.AButtonUp = toggle_playing
@@ -35,37 +34,30 @@ function init_ui(index)
         Menu(index)
     end
     playdate.leftButtonDown = function ()
-        sideview.duration:start_seek_timer(playdate.kButtonLeft)
+        ui.seeking.start_seek_timer(playdate.kButtonLeft)
     end
     playdate.rightButtonDown = function ()
-        sideview.duration:start_seek_timer(playdate.kButtonRight)
+        ui.seeking.start_seek_timer(playdate.kButtonRight)
     end
 end
 
-function update_ui()
+function ui.update()
+    ui.seeking.seek_update()
     pd_sprite.update()
 end
 
-function set_track_ui(track)
-    if sideview == nil or playback_panel == nil then return end
+function ui.set_track(track)
+    ui.track = track
 
-    playback_panel.track = track
-    sideview.duration.track = track
+    ui.artsideview:set_album(track.album)
+    ui.playback_panel:refresh()
+    ui.durationsideview:refresh()
 
-    sideview.art:set_album(track.album)
-
-    playback_panel:update()
-    sideview.duration:reset_update_timer()
+    ui.toggle_playing(true)
 end
 
-function toggle_playing_ui(playing)
-    if sideview == nil then return end
-
-    if playing then
-        sideview.duration.update_timer:start()
-    else
-        sideview.duration.update_timer:pause()
-    end
+function ui.toggle_playing(playing)
+    ui.durationsideview:setUpdatesEnabled(playing)
 end
 
 -- https://chat.openai.com/share/9baf2769-261c-4051-be8c-b17c7c722973

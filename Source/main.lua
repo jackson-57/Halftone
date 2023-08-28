@@ -1,15 +1,23 @@
+-- global tables
+UI = {}
+
+-- imports
 import "ui/consts"
 import "consts"
 import "index"
 import "playback"
 import "ui/ui"
 
--- profiling
+-- consts
 local pd_file <const> = playdate.file
 local pd_meta <const> = playdate.metadata
+local pd_timer <const> = playdate.timer
+local pd_getelapsed <const> = playdate.getElapsedTime
+local ui <const> = UI
 
+-- profiling
 function log_time(name)
-    local time = playdate.getElapsedTime()
+    local time = pd_getelapsed()
     log_file(name .. ": " .. time .. "s")
 end
 
@@ -43,10 +51,10 @@ end
 
 -- init
 audio_init()
-init_ui(index)
+ui.init(index)
 
 function playdate.update()
     audio_update()
-    update_ui()
-    playdate.timer:updateTimers()
+    ui.update()
+    pd_timer.updateTimers()
 end

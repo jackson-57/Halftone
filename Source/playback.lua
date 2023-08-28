@@ -1,3 +1,5 @@
+local ui <const> = UI
+
 local queue = nil
 local queue_position = nil
 
@@ -11,7 +13,13 @@ end
 function play_track(track)
     set_playback(track.path)
 
-    set_track_ui(track)
+    ui.set_track(track)
+end
+
+function toggle_playing(playing)
+    local playing_result = toggle_playback(playing)
+    if playing_result == nil then return end
+    ui.toggle_playing(playing_result)
 end
 
 function play_previous()
@@ -34,10 +42,4 @@ function play_next()
     else
         toggle_playing(false)
     end
-end
-
-function toggle_playing(playing)
-    local playing_result = toggle_playback(playing)
-    if playing_result == nil then return end
-    toggle_playing_ui(playing_result)
 end
