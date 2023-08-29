@@ -12,7 +12,7 @@ local seeking = {}
 ui.seeking = seeking
 
 function seeking.start_seek_timer(direction)
-    if not ui.track then return end
+    if seek_direction or not ui.track then return end
     seek_direction = direction
 
     seek_timer = pd_timer.new(seek_hold_delay, function ()

@@ -30,16 +30,6 @@ local function drawSectionHeader(self, section, x, y, width, height)
     pd_gfx.drawTextInRect(self.parent.section_title, x + 10, y + 1, width, height, nil, "...", nil, font)
 end
 
-local function addKeyRepeat(self, callback)
-    self.keyTimer = playdate.timer.keyRepeatTimerWithDelay(300, 50, callback)
-end
-
-local function removeKeyRepeat(self)
-    if self.keyTimer then
-        self.keyTimer:remove()
-    end
-end
-
 function ListPanel:init()
     ListPanel.super.init(self)
 
@@ -62,6 +52,19 @@ function ListPanel:update()
         self.listview:drawInRect(0, 0, self.panel_width, self.panel_height)
 
         pd_gfx.popContext()
+    end
+end
+
+local function addKeyRepeat(self, callback)
+    if not self.keyTimer then
+        self.keyTimer = playdate.timer.keyRepeatTimerWithDelay(300, 50, callback)
+    end
+end
+
+local function removeKeyRepeat(self)
+    if self.keyTimer then
+        self.keyTimer:remove()
+        self.keyTimer = nil
     end
 end
 
