@@ -3,6 +3,7 @@ import "CoreLibs/string"
 local pd_file <const> = playdate.file
 local pd_datastore <const> = playdate.datastore
 local pd_uuid <const> = playdate.string.UUID
+local pd_display <const> = playdate.display
 
 local consts <const> = consts
 
@@ -62,6 +63,8 @@ local function index_files()
 
             -- table.insert(album.tracks, meta_track_number, track)
             table.insert(album.tracks, track)
+
+            coroutine.yield()
         end
     end
 
@@ -145,10 +148,16 @@ local function index_art(index)
         for i, art in pairs(art_batch) do
             pd_datastore.writeImage(art, album_art_path .. consts.cover_art_sizes[i] .. "/" .. album.art_uuid .. ".pdi")
         end
+
+        coroutine.yield()
     end
 end
 
 function init_index()
+    -- Optimize yielding
+    local normal_refresh_rate = pd_display.getRefreshRate()
+    pd_display.setRefreshRate(0)
+
     -- Get total size of all audio files
     playdate.resetElapsedTime()
     local byte_count = count_bytes()
@@ -184,6 +193,9 @@ function init_index()
         index_art(index)
         log_time("processing album art")
     end
+
+    -- Reset yielding optimization
+    pd_display.setRefreshRate(normal_refresh_rate)
 
     return index
 end
