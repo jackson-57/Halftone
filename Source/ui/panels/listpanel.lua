@@ -43,6 +43,7 @@ function ListPanel:init()
     self:setCenter(0, 0)
     self:moveTo(0, 0)
     self:setImage(pd_gfx.image.new(self.panel_width, self.panel_height))
+    self:setRedrawsOnImageChange(false)
     self:setOpaque(true)
 
     self.listview = pd_gridview.new(self.cell_width, self.cell_height)
@@ -66,6 +67,8 @@ function ListPanel:update()
         self.listview:drawInRect(0, 0, self.panel_width, self.panel_height)
 
         pd_gfx.popContext()
+
+        self:markDirty()
     end
 end
 

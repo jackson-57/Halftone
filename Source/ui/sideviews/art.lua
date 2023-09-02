@@ -11,6 +11,7 @@ function ArtSideview:init()
     self:setCenter(0, 0)
     self:moveTo(ui_consts.panel_width, 0)
     self:setImage(pd_img.new(ui_consts.cover_size_full, ui_consts.cover_size_full))
+    self:setRedrawsOnImageChange(false)
     self:setOpaque(true)
     self:add()
 end
@@ -19,5 +20,6 @@ function ArtSideview:set_album(album)
     if self.album ~= album then
         self.album = album
         self:getImage():load(consts.album_art_path .. ui_consts.cover_size_full .. "/" .. album.art_uuid)
+        self:markDirty()
     end
 end
