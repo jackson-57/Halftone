@@ -4,7 +4,7 @@ local properties = {
 
 class("Albums", properties).extends(ListPanel)
 
-function Albums:getText(row)
+function Albums:get_row_text(row)
     return self.albums[row].title
 end
 

@@ -35,7 +35,7 @@ function ListPanel:drawCell(listview, section, row, column, selected, x, y, widt
 	end
 
     pd_gfx.fillRect(x, y, width, height)
-    pd_gfx.drawTextInRect(self:getText(row), x + 5, y + 2, width - 5, height, nil, "...", nil, normal_font)
+    pd_gfx.drawTextInRect(self:get_row_text(row), x + 5, y + 2, width - 5, height, nil, "...", nil, normal_font)
 end
 
 function ListPanel:init()
@@ -74,8 +74,8 @@ function ListPanel:update()
 end
 
 function ListPanel:add()
-    local function addKeyRepeat(direction)
-        if not self.keyTimer then
+    local function add_key_repeat(direction)
+        if not self.key_timer then
             local function callback(timer)
                 -- timerEndedCallback is set after callback is immediately run
                 local is_immediate = timer.timerEndedCallback == nil
@@ -87,28 +87,28 @@ function ListPanel:add()
                 end
             end
 
-            self.keyTimer = playdate.timer.keyRepeatTimerWithDelay(300, 50, callback)
+            self.key_timer = playdate.timer.keyRepeatTimerWithDelay(300, 50, callback)
         end
     end
 
-    local function removeKeyRepeat()
-        if self.keyTimer then
-            self.keyTimer:remove()
-            self.keyTimer = nil
+    local function remove_key_repeat()
+        if self.key_timer then
+            self.key_timer:remove()
+            self.key_timer = nil
         end
     end
 
-    local panelInputHandlers = {
-        upButtonDown = function () addKeyRepeat(playdate.kButtonDown) end,
-        downButtonDown = function () addKeyRepeat(playdate.kButtonUp) end,
-        upButtonUp = removeKeyRepeat,
-        downButtonUp = removeKeyRepeat,
+    local panel_input_handlers = {
+        upButtonDown = function () add_key_repeat(playdate.kButtonDown) end,
+        downButtonDown = function () add_key_repeat(playdate.kButtonUp) end,
+        upButtonUp = remove_key_repeat,
+        downButtonUp = remove_key_repeat,
 
         AButtonUp = function () self:select() end,
         BButtonUp = function () self:remove() end
     }
 
-    pd_input.push(panelInputHandlers)
+    pd_input.push(panel_input_handlers)
 
     ListPanel.super.add(self)
 end
@@ -120,7 +120,7 @@ function ListPanel:remove()
     ListPanel.super.remove(self)
 end
 
-function ListPanel:removePanels()
+function ListPanel:remove_all_panels()
     for _ in pairs(panel_list) do
         pd_input.pop()
     end

@@ -1,6 +1,6 @@
 class("Menu").extends(ListPanel)
 
-function Menu:getText(row)
+function Menu:get_row_text(row)
     return self.menuOptions[row].name
 end
 

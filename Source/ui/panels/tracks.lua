@@ -4,7 +4,7 @@ local properties = {
 
 class("Tracks", properties).extends(ListPanel)
 
-function Tracks:getText(row)
+function Tracks:get_row_text(row)
     return self.tracks[row].title
 end
 
@@ -17,5 +17,5 @@ end
 
 function Tracks:select()
     set_queue(self.tracks, self.listview:getSelectedRow())
-    self:removePanels()
+    self:remove_all_panels()
 end
