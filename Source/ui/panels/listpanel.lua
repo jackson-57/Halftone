@@ -76,10 +76,13 @@ function ListPanel:add()
     local function addKeyRepeat(direction)
         if not self.keyTimer then
             local function callback(timer)
+                -- timerEndedCallback is set after callback is immediately run
+                local is_immediate = timer.timerEndedCallback == nil
+
                 if direction == playdate.kButtonDown then
-                    self.listview:selectPreviousRow(true)
+                    self.listview:selectPreviousRow(true, nil, is_immediate)
                 else
-                    self.listview:selectNextRow(true)
+                    self.listview:selectNextRow(true, nil, is_immediate)
                 end
             end
 
