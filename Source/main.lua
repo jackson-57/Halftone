@@ -4,6 +4,7 @@ UI = {}
 -- imports
 import "ui/consts"
 import "consts"
+import "splash/empty"
 import "index"
 import "playback"
 import "ui/ui"
@@ -46,7 +47,17 @@ pd_file.mkdir(consts.app_dir)
 local index = init_index()
 if not index then
     print("Failed to load index")
-    do return end
+    return
+end
+
+-- empty library check
+if #index.tracks == 0 then
+    empty_library_splash()
+
+    -- stub update loop
+    function playdate.update() end
+
+    return
 end
 
 -- init
