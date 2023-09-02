@@ -3,7 +3,8 @@ local pd_gridview <const> = playdate.ui.gridview
 local pd_input <const> = playdate.inputHandlers
 
 local consts <const> = ui_consts
-local font <const> = pd_gfx.getFont(pd_gfx.font.kVariantBold)
+local normal_font <const> = pd_gfx.getFont()
+local bold_font <const> = pd_gfx.getFont(pd_gfx.font.kVariantBold)
 
 local panel_list = {}
 
@@ -17,7 +18,14 @@ local properties = {
 
 class("ListPanel", properties).extends(pd_gfx.sprite)
 
-local function drawCellBackground(selected, x, y, width, height)
+function ListPanel:drawSectionHeader(listview, section, x, y, width, height)
+    pd_gfx.setColor(pd_gfx.kColorBlack)
+    pd_gfx.fillRect(x, y, width, height)
+    pd_gfx.setImageDrawMode(pd_gfx.kDrawModeInverted)
+    pd_gfx.drawTextInRect(self.section_title, x + 10, y + 1, width - 10, height, nil, "...", nil, bold_font)
+end
+
+function ListPanel:drawCell(listview, section, row, column, selected, x, y, width, height)
     if selected then
         pd_gfx.setColor(pd_gfx.kColorBlack)
 		pd_gfx.setImageDrawMode(pd_gfx.kDrawModeInverted)
@@ -27,13 +35,7 @@ local function drawCellBackground(selected, x, y, width, height)
 	end
 
     pd_gfx.fillRect(x, y, width, height)
-end
-
-local function drawSectionHeader(self, section, x, y, width, height)
-    pd_gfx.setColor(pd_gfx.kColorBlack)
-    pd_gfx.fillRect(x, y, width, height)
-    pd_gfx.setImageDrawMode(pd_gfx.kDrawModeInverted)
-    pd_gfx.drawTextInRect(self.parent.section_title, x + 10, y + 1, width, height, nil, "...", nil, font)
+    pd_gfx.drawTextInRect(self:getText(row), x + 5, y + 2, width - 5, height, nil, "...", nil, normal_font)
 end
 
 function ListPanel:init()
@@ -47,9 +49,8 @@ function ListPanel:init()
     self:setOpaque(true)
 
     self.listview = pd_gridview.new(self.cell_width, self.cell_height)
-    self.listview.parent = self
-    self.listview.drawCellBackground = drawCellBackground
-    self.listview.drawSectionHeader = drawSectionHeader
+    self.listview.drawCell = function(...) self:drawCell(...) end
+    self.listview.drawSectionHeader = function(...) self:drawSectionHeader(...) end
     self.listview:setCellPadding(5, 5, 0, 1)
     self.listview:setSectionHeaderHeight(20)
     self.listview:setSectionHeaderPadding(0, 0, 0, 5)
