@@ -37,34 +37,45 @@ function log_file(str, reset)
     end
 end
 
-log_file(pd_meta.name .. " " .. pd_meta.version .. " (" .. pd_meta.buildNumber .. ")", true)
+-- initialization
+local initialized = false
+local function init()
+    -- setup
+    log_file(pd_meta.name .. " " .. pd_meta.version .. " (" .. pd_meta.buildNumber .. ")", true)
+    playdate.setCrankSoundsDisabled(true)
+    pd_file.mkdir(consts.app_dir)
 
--- setup
-playdate.setCrankSoundsDisabled(true)
-pd_file.mkdir(consts.app_dir)
+    -- index
+    local index = init_index()
+    if not index then
+        error("Failed to load index")
+        return
+    end
 
--- index
-local index = init_index()
-if not index then
-    print("Failed to load index")
-    return
+    -- empty library check
+    if #index.tracks == 0 then
+        empty_library_splash()
+        return
+    end
+
+    -- subsystem initalization
+    audio_init()
+    ui.init(index)
+
+    return true
 end
-
--- empty library check
-if #index.tracks == 0 then
-    empty_library_splash()
-
-    -- stub update loop
-    function playdate.update() end
-
-    return
-end
-
--- init
-audio_init()
-ui.init(index)
 
 function playdate.update()
+    if not initialized then
+        if init() then
+            initialized = true
+        else
+            print("Initialization failed!")
+            playdate.stop()
+            return
+        end
+    end
+
     audio_update()
     ui.update()
     pd_timer.updateTimers()
