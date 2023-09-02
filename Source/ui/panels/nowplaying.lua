@@ -17,6 +17,7 @@ function NowPlaying:init()
 
     self:setCenter(0, 0)
     self:setBounds(0, 0, consts.panel_width, consts.display_height)
+    -- self:setOpaque(true)
 
     self.canvas = pd_gfx.image.new(padded_width, padded_height)
 

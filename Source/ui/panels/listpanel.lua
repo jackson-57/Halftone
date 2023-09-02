@@ -43,6 +43,7 @@ function ListPanel:init()
     self:setCenter(0, 0)
     self:moveTo(0, 0)
     self:setImage(pd_gfx.image.new(self.panel_width, self.panel_height))
+    self:setOpaque(true)
 
     self.listview = pd_gridview.new(self.cell_width, self.cell_height)
     self.listview.parent = self
