@@ -37,9 +37,15 @@ function log_file(str, reset)
     end
 end
 
+-- update
+local function post_initialization_update()
+    audio_update()
+    ui.update()
+    pd_timer.updateTimers()
+end
+
 -- initialization
-local initialized = false
-local function init()
+function playdate.update()
     -- setup
     log_file(pd_meta.name .. " " .. pd_meta.version .. " (" .. pd_meta.buildNumber .. ")", true)
     playdate.setCrankSoundsDisabled(true)
@@ -49,34 +55,22 @@ local function init()
     local index = init_index()
     if not index then
         error("Failed to load index")
+        playdate.stop()
         return
     end
 
-    -- empty library check
+    -- empty library splash
     if #index.tracks == 0 then
         empty_library_splash()
+        print("Library is empty, stopping initialization")
+        playdate.stop()
         return
     end
 
-    -- subsystem initalization
+    -- subsystem initialization
     audio_init()
     ui.init(index)
 
-    return true
-end
-
-function playdate.update()
-    if not initialized then
-        if init() then
-            initialized = true
-        else
-            print("Initialization failed!")
-            playdate.stop()
-            return
-        end
-    end
-
-    audio_update()
-    ui.update()
-    pd_timer.updateTimers()
+    -- set post-initialization update loop
+    playdate.update = post_initialization_update
 end
