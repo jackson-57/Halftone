@@ -11,21 +11,15 @@ function Menu:init(index)
     self.menuOptions = {
         {
             name = "albums",
-            select = function ()
-                Albums(self.index.albums)
-            end
+            select = function () Albums(self.index.albums) end
         },
         {
             name = "artists",
-            select = function ()
-                Artists(self.index.artists)
-            end
+            select = function () Artists(self.index.artists) end
         },
         {
             name = "tracks",
-            select = function ()
-                Tracks(self.index.tracks)
-            end
+            select = function () Tracks(self.index.tracks) end
         }
     }
 

@@ -49,8 +49,8 @@ function ListPanel:init()
     self:setOpaque(true)
 
     self.listview = pd_gridview.new(self.cell_width, self.cell_height)
-    self.listview.drawCell = function(...) self:drawCell(...) end
-    self.listview.drawSectionHeader = function(...) self:drawSectionHeader(...) end
+    self.listview.drawCell = function (...) self:drawCell(...) end
+    self.listview.drawSectionHeader = function (...) self:drawSectionHeader(...) end
     self.listview:setCellPadding(5, 5, 0, 1)
     self.listview:setSectionHeaderHeight(20)
     self.listview:setSectionHeaderPadding(0, 0, 0, 5)
@@ -99,21 +99,13 @@ function ListPanel:add()
     end
 
     local panelInputHandlers = {
-        upButtonDown = function()
-            addKeyRepeat(playdate.kButtonDown)
-        end,
-        downButtonDown = function ()
-            addKeyRepeat(playdate.kButtonUp)
-        end,
+        upButtonDown = function () addKeyRepeat(playdate.kButtonDown) end,
+        downButtonDown = function () addKeyRepeat(playdate.kButtonUp) end,
         upButtonUp = removeKeyRepeat,
         downButtonUp = removeKeyRepeat,
 
-        AButtonUp = function()
-            self:select()
-        end,
-        BButtonUp = function()
-            self:remove()
-        end
+        AButtonUp = function () self:select() end,
+        BButtonUp = function () self:remove() end
     }
 
     pd_input.push(panelInputHandlers)

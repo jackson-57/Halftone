@@ -29,15 +29,9 @@ function ui.init(index)
     Menu(index)
 
     playdate.AButtonUp = toggle_playing
-    playdate.BButtonUp = function ()
-        Menu(index)
-    end
-    playdate.leftButtonDown = function ()
-        ui.seeking.start_seek_timer(playdate.kButtonLeft)
-    end
-    playdate.rightButtonDown = function ()
-        ui.seeking.start_seek_timer(playdate.kButtonRight)
-    end
+    playdate.BButtonUp = function () Menu(index) end
+    playdate.leftButtonDown = function () ui.seeking.start_seek_timer(playdate.kButtonLeft) end
+    playdate.rightButtonDown = function () ui.seeking.start_seek_timer(playdate.kButtonRight) end
 end
 
 function ui.update()
