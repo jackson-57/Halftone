@@ -1,33 +1,55 @@
 local pd_gfx <const> = playdate.graphics
 local ui <const> = UI
-local font <const> = pd_gfx.getFont(pd_gfx.font.kVariantBold)
+local normal_font <const> = pd_gfx.getFont()
+local bold_font <const> = pd_gfx.getFont(pd_gfx.font.kVariantBold)
 local consts <const> = ui_consts
 
-local height <const> = 20
-local horizontal_padding <const> = 10
-local vertical_padding <const> = 5
+local text_padding <const> = 5
+local panel_padding <const> = 10
 
-class("NowPlaying").extends(Panel)
+local padded_width <const> = consts.panel_width - (panel_padding * 2)
+local padded_height <const> = consts.display_height - (panel_padding * 2)
+
+class("NowPlaying").extends(pd_gfx.sprite)
 
 function NowPlaying:init()
     NowPlaying.super.init(self)
 
+    self:setCenter(0, 0)
+    self:setBounds(0, 0, consts.panel_width, consts.display_height)
+
+    self.canvas = pd_gfx.image.new(padded_width, padded_height)
+
     self:setUpdatesEnabled(false)
+    self:add()
 end
 
-local vertical_center <const> = (consts.display_height - height) / 2
-local padded_height <const> = height + vertical_padding
-local width <const> = consts.panel_width - (horizontal_padding * 2)
+local function draw_text(text, height, font)
+    return height + select(2, pd_gfx.drawTextInRect(text, 0, height, padded_width, padded_height - height, nil, "...", nil, font))
+end
 
 function NowPlaying:refresh()
     if ui.track then
-        pd_gfx.pushContext(self:getImage())
+        local height = 0
+
+        pd_gfx.pushContext(self.canvas)
         pd_gfx.clear()
 
-        pd_gfx.drawTextInRect(ui.track.title, horizontal_padding, vertical_center - padded_height, width, height, nil, "...", nil, font)
-        pd_gfx.drawTextInRect(ui.track.album.title, horizontal_padding, vertical_center, width, height, nil, "...", nil, font)
-        pd_gfx.drawTextInRect(ui.track.artist, horizontal_padding, vertical_center + padded_height, width, height, nil, "...", nil, font)
+        height = draw_text(ui.track.title, height, bold_font) + text_padding
+        height = draw_text(ui.track.album.title, height, normal_font) + text_padding
+        height = draw_text(ui.track.artist, height, normal_font)
 
         pd_gfx.popContext()
+
+        self.rendered_height = height
+        self:markDirty()
+    end
+end
+
+function NowPlaying:draw(x, y, width, height)
+    if self.rendered_height then
+        local vertical_center = height / 2 - self.rendered_height / 2
+
+        self.canvas:draw(x + panel_padding, vertical_center, nil, 0, 0, padded_width, self.rendered_height)
     end
 end

@@ -1,17 +1,21 @@
 local pd_gfx <const> = playdate.graphics
 local pd_gridview <const> = playdate.ui.gridview
 local pd_input <const> = playdate.inputHandlers
+
+local consts <const> = ui_consts
 local font <const> = pd_gfx.getFont(pd_gfx.font.kVariantBold)
 
 local panel_list = {}
 
 local properties = {
+    panel_width = consts.panel_width,
+    panel_height = consts.display_height,
     cell_width = 0,
     cell_height = 20,
     section_title = "menu"
 }
 
-class("ListPanel", properties).extends(Panel)
+class("ListPanel", properties).extends(pd_gfx.sprite)
 
 local function drawCellBackground(selected, x, y, width, height)
     if selected then
@@ -36,6 +40,10 @@ function ListPanel:init()
     ListPanel.super.init(self)
     table.insert(panel_list, self)
 
+    self:setCenter(0, 0)
+    self:moveTo(0, 0)
+    self:setImage(pd_gfx.image.new(self.panel_width, self.panel_height))
+
     self.listview = pd_gridview.new(self.cell_width, self.cell_height)
     self.listview.parent = self
     self.listview.drawCellBackground = drawCellBackground
@@ -43,6 +51,8 @@ function ListPanel:init()
     self.listview:setCellPadding(5, 5, 0, 1)
     self.listview:setSectionHeaderHeight(20)
     self.listview:setSectionHeaderPadding(0, 0, 0, 5)
+
+    self:add()
 end
 
 function ListPanel:update()

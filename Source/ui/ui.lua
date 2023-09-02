@@ -10,7 +10,6 @@ import "sideviews/barsideview"
 import "sideviews/art"
 import "sideviews/duration"
 
-import "panel"
 import "panels/listpanel"
 import "panels/nowplaying"
 import "panels/menu"
