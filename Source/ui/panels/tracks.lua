@@ -22,4 +22,5 @@ end
 
 function Tracks:select()
     set_queue(self.tracks, self.listview:getSelectedRow())
+    self:removePanels()
 end

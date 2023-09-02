@@ -3,6 +3,8 @@ local pd_gridview <const> = playdate.ui.gridview
 local pd_input <const> = playdate.inputHandlers
 local font <const> = pd_gfx.getFont(pd_gfx.font.kVariantBold)
 
+local panel_list = {}
+
 local properties = {
     cell_width = 0,
     cell_height = 20,
@@ -32,6 +34,7 @@ end
 
 function ListPanel:init()
     ListPanel.super.init(self)
+    table.insert(panel_list, self)
 
     self.listview = pd_gridview.new(self.cell_width, self.cell_height)
     self.listview.parent = self
@@ -102,7 +105,17 @@ function ListPanel:add()
 end
 
 function ListPanel:remove()
+    table.remove(panel_list)
     pd_input.pop()
 
     ListPanel.super.remove(self)
+end
+
+function ListPanel:removePanels()
+    for _ in pairs(panel_list) do
+        pd_input.pop()
+    end
+
+    self.removeSprites(panel_list)
+    panel_list = {}
 end
