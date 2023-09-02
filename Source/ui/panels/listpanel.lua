@@ -72,38 +72,37 @@ function ListPanel:update()
     end
 end
 
-local function addKeyRepeat(self, callback)
-    if not self.keyTimer then
-        self.keyTimer = playdate.timer.keyRepeatTimerWithDelay(300, 50, callback)
-    end
-end
-
-local function removeKeyRepeat(self)
-    if self.keyTimer then
-        self.keyTimer:remove()
-        self.keyTimer = nil
-    end
-end
-
 function ListPanel:add()
+    local function addKeyRepeat(direction)
+        if not self.keyTimer then
+            local function callback(timer)
+                if direction == playdate.kButtonDown then
+                    self.listview:selectPreviousRow(true)
+                else
+                    self.listview:selectNextRow(true)
+                end
+            end
+
+            self.keyTimer = playdate.timer.keyRepeatTimerWithDelay(300, 50, callback)
+        end
+    end
+
+    local function removeKeyRepeat()
+        if self.keyTimer then
+            self.keyTimer:remove()
+            self.keyTimer = nil
+        end
+    end
+
     local panelInputHandlers = {
         upButtonDown = function()
-            addKeyRepeat(self, function()
-                self.listview:selectPreviousRow(true)
-            end)
+            addKeyRepeat(playdate.kButtonDown)
         end,
         downButtonDown = function ()
-            addKeyRepeat(self, function()
-                self.listview:selectNextRow(true)
-            end)
+            addKeyRepeat(playdate.kButtonUp)
         end,
-
-        upButtonUp = function()
-            removeKeyRepeat(self)
-        end,
-        downButtonUp = function()
-            removeKeyRepeat(self)
-        end,
+        upButtonUp = removeKeyRepeat,
+        downButtonUp = removeKeyRepeat,
 
         AButtonUp = function()
             self:select()
