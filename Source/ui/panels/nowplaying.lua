@@ -8,7 +8,7 @@ local text_padding <const> = 5
 local panel_padding <const> = 10
 
 local padded_width <const> = consts.panel_width - (panel_padding * 2)
-local padded_height <const> = consts.display_height - (panel_padding * 2)
+local padded_height <const> = consts.display_height - panel_padding - consts.progress_height
 
 class("NowPlaying").extends(pd_gfx.sprite)
 
@@ -47,9 +47,13 @@ function NowPlaying:refresh()
 end
 
 function NowPlaying:draw(x, y, width, height)
-    if self.rendered_height then
-        local vertical_center = height / 2 - self.rendered_height / 2
+    -- pd_gfx.setColor(pd_gfx.kColorBlack)
+    -- pd_gfx.fillRect(x, y, width, height)
 
+    if self.rendered_height then
+        local vertical_center = consts.display_height - consts.progress_height - self.rendered_height
+
+        -- pd_gfx.setImageDrawMode(pd_gfx.kDrawModeNXOR)
         self.canvas:draw(x + panel_padding, vertical_center, nil, 0, 0, padded_width, self.rendered_height)
     end
 end
