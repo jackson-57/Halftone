@@ -57,6 +57,7 @@ end
 
 function ui.toggle_playing(playing)
     ui.durationsideview:setUpdatesEnabled(playing)
+    pd.setAutoLockDisabled(playing)
 end
 
 -- https://chat.openai.com/share/9baf2769-261c-4051-be8c-b17c7c722973
