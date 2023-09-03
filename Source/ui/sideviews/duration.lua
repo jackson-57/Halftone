@@ -1,11 +1,14 @@
 local pd_gfx <const> = playdate.graphics
 local ui <const> = UI
+local engine <const> = Engine
 local font <const> = pd_gfx.getFont(pd_gfx.font.kVariantBold)
+local textAlignment <const> = kTextAlignment
+local math_floor <const> = math.floor
 
-class("DurationSideview").extends(BarSideview)
+class("DurationSideview", nil, ui.sideviews).extends(ui.sideviews.BarSideview)
 
-function DurationSideview:get_elapsed()
-    local elapsed = get_playback_status()
+function ui.sideviews.DurationSideview:get_elapsed()
+    local elapsed = engine.get_playback_status()
     if elapsed == nil then
         elapsed = 0
     end
@@ -13,16 +16,16 @@ function DurationSideview:get_elapsed()
     return elapsed
 end
 
-function DurationSideview:calculate_width(elapsed)
+function ui.sideviews.DurationSideview:calculate_width(elapsed)
     -- https://stackoverflow.com/a/18313481
-    return math.floor((self.width * (elapsed / self.current_duration)) + 0.5)
+    return math_floor((self.width * (elapsed / self.current_duration)) + 0.5)
 end
 
-function DurationSideview:calculate_elapsed()
-    return math.floor((self.current_duration * (self.seek_width / self.width)) + 0.5)
+function ui.sideviews.DurationSideview:calculate_elapsed()
+    return math_floor((self.current_duration * (self.seek_width / self.width)) + 0.5)
 end
 
-function DurationSideview:draw(x, y, width, height)
+function ui.sideviews.DurationSideview:draw(x, y, width, height)
     if not ui.track then return end
 
     local elapsed = nil
@@ -38,18 +41,18 @@ function DurationSideview:draw(x, y, width, height)
     pd_gfx.fillRect(x, y, filled_width, height)
 
     pd_gfx.setImageDrawMode(pd_gfx.kDrawModeNXOR)
-    pd_gfx.font.drawText(font, sec_to_hms(elapsed), x + 2, y + 2)
+    pd_gfx.font.drawText(font, ui.sec_to_hms(elapsed), x + 2, y + 2)
     -- todo: cache?
-    pd_gfx.font.drawTextAligned(font, sec_to_hms(self.current_duration), width - 2, y + 2, kTextAlignment.right)
+    pd_gfx.font.drawTextAligned(font, ui.sec_to_hms(self.current_duration), width - 2, y + 2, textAlignment.right)
 end
 
-function DurationSideview:refresh()
+function ui.sideviews.DurationSideview:refresh()
     self.current_elapsed = self:get_elapsed()
     self.current_duration = ui.track.duration
     self:markDirty()
 end
 
-function DurationSideview:update()
+function ui.sideviews.DurationSideview:update()
     local elapsed = self:get_elapsed()
     if self.current_elapsed ~= elapsed then
         self.current_elapsed = elapsed

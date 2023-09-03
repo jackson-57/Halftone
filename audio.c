@@ -104,7 +104,7 @@ int audio_update(lua_State* L)
                     }
 
                     const char* outerr;
-                    int err = pd->lua->callFunction("play_next", 0, &outerr);
+                    int err = pd->lua->callFunction("Playback.play_next", 0, &outerr);
                     if (err != 1)
                     {
                         pd->system->error("Lua error while calling for next track: %s", outerr);

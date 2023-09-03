@@ -6,6 +6,10 @@ import "CoreLibs/object"
 import "consts"
 import "seeking"
 
+local ui <const> = UI
+ui.sideviews = {}
+ui.panels = {}
+
 import "sideviews/barsideview"
 import "sideviews/art"
 import "sideviews/duration"
@@ -18,20 +22,22 @@ import "panels/albums"
 import "panels/tracks"
 import "panels/settings"
 
-local pd_gfx <const> = playdate.graphics
+local pd <const> = playdate
+local pd_gfx <const> = pd.graphics
 local pd_sprite <const> = pd_gfx.sprite
-local ui <const> = UI
+local math_floor <const> = math.floor
+local string_format <const> = string.format
 
 function ui.init(index)
-    ui.artsideview = ArtSideview()
-    ui.playback_panel = NowPlaying()
-    ui.durationsideview = DurationSideview()
-    Menu(index)
+    ui.artsideview = ui.sideviews.ArtSideview()
+    ui.playback_panel = ui.panels.NowPlaying()
+    ui.durationsideview = ui.sideviews.DurationSideview()
+    ui.panels.Menu(index)
 
-    playdate.AButtonUp = toggle_playing
-    playdate.BButtonUp = function () Menu(index) end
-    playdate.leftButtonDown = function () ui.seeking.start_seek_timer(playdate.kButtonLeft) end
-    playdate.rightButtonDown = function () ui.seeking.start_seek_timer(playdate.kButtonRight) end
+    pd.AButtonUp = Playback.toggle_playing
+    pd.BButtonUp = function () ui.panels.Menu(index) end
+    pd.leftButtonDown = function () ui.seeking.start_seek_timer(pd.kButtonLeft) end
+    pd.rightButtonDown = function () ui.seeking.start_seek_timer(pd.kButtonRight) end
 end
 
 function ui.update()
@@ -54,14 +60,14 @@ function ui.toggle_playing(playing)
 end
 
 -- https://chat.openai.com/share/9baf2769-261c-4051-be8c-b17c7c722973
-function sec_to_hms(sec)
-    local hours = math.floor(sec / 3600)
-    local minutes = math.floor((sec % 3600) / 60)
+function ui.sec_to_hms(sec)
+    local hours = math_floor(sec / 3600)
+    local minutes = math_floor((sec % 3600) / 60)
     local seconds = sec % 60
 
     if hours > 0 then
-        return string.format("%d:%02d:%02d", hours, minutes, seconds)
+        return string_format("%d:%02d:%02d", hours, minutes, seconds)
     else
-        return string.format("%d:%02d", minutes, seconds)
+        return string_format("%d:%02d", minutes, seconds)
     end
 end

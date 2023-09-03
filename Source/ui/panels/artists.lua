@@ -1,22 +1,24 @@
+local ui_panels <const> = UI.panels
+
 local properties = {
     section_title = "artists"
 }
 
-class("Artists", properties).extends(ListPanel)
+class("Artists", properties, ui_panels).extends(ui_panels.ListPanel)
 
-function Artists:get_row_text(row)
+function ui_panels.Artists:get_row_text(row)
     return self.artists[row].name
 end
 
-function Artists:init(artists)
-    Artists.super.init(self)
+function ui_panels.Artists:init(artists)
+    ui_panels.Artists.super.init(self)
     self.artists = artists
 
     self.listview:setNumberOfRows(#artists)
 end
 
-function Artists:select()
+function ui_panels.Artists:select()
     local artist = self.artists[self.listview:getSelectedRow()]
-    local albums = Albums(artist.albums)
+    local albums = ui_panels.Albums(artist.albums)
     albums.section_title = artist.name
 end

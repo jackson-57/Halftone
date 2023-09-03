@@ -1,9 +1,10 @@
 local consts <const> = ui_consts
+local ui_sideviews <const> = UI.sideviews
 
-class("BarSideview").extends(playdate.graphics.sprite)
+class("BarSideview", nil, ui_sideviews).extends(playdate.graphics.sprite)
 
-function BarSideview:init()
-    BarSideview.super.init(self)
+function ui_sideviews.BarSideview:init()
+    ui_sideviews.BarSideview.super.init(self)
 
     self:setUpdatesEnabled(false)
     self:setCenter(0, 0)

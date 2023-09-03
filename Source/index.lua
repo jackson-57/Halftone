@@ -1,9 +1,14 @@
 import "CoreLibs/string"
 
-local pd_file <const> = playdate.file
-local pd_datastore <const> = playdate.datastore
-local pd_uuid <const> = playdate.string.UUID
-local pd_display <const> = playdate.display
+local pd <const> = playdate
+local pd_file <const> = pd.file
+local pd_datastore <const> = pd.datastore
+local pd_uuid <const> = pd.string.UUID
+local logging <const> = Logging
+local engine <const> = Engine
+local tbl <const> = table
+local string_match <const> = string.match
+local coro_yield <const> = coroutine.yield
 
 local consts <const> = consts
 
@@ -15,7 +20,7 @@ local function scan_files(dir, callback)
     for _, file in pairs(pd_file.listFiles(dir)) do
         if pd_file.isdir(file) then
             scan_files(dir .. file, callback)
-        elseif string.match(file, "[^.]+$") == "opus" then
+        elseif string_match(file, "[^.]+$") == "opus" then
             callback(dir .. file)
         end
     end
@@ -37,7 +42,7 @@ local function index_files()
     local named_index = {}
 
     local cb = function (path)
-        local meta_duration, meta_title, meta_album, meta_artist, meta_album_artist, meta_year, meta_track_number = parse_metadata(path)
+        local meta_duration, meta_title, meta_album, meta_artist, meta_album_artist, meta_year, meta_track_number = engine.parse_metadata(path)
         if meta_duration then
             local track = {path=path, title=meta_title, artist=meta_artist, duration = meta_duration}
 
@@ -48,7 +53,7 @@ local function index_files()
                 artist = {name = meta_album_artist, albums = {}}
                 named_artist = {artist = artist, albums = {}}
                 named_index[meta_album_artist] = named_artist
-                table.insert(index.artists, artist)
+                tbl.insert(index.artists, artist)
             else
                 artist = named_artist.artist
             end
@@ -58,13 +63,13 @@ local function index_files()
             if not album then
                 album = {title = meta_album, year = meta_year, tracks = {}, art_uuid=pd_uuid(uuid_length)}
                 named_artist.albums[meta_album] = album
-                table.insert(artist.albums, album)
+                tbl.insert(artist.albums, album)
             end
 
-            -- table.insert(album.tracks, meta_track_number, track)
-            table.insert(album.tracks, track)
+            -- tbl.insert(album.tracks, meta_track_number, track)
+            tbl.insert(album.tracks, track)
 
-            coroutine.yield()
+            coro_yield()
         end
     end
 
@@ -80,11 +85,11 @@ local function link_index(index)
     for _, artist in pairs(index.artists) do
         for _, album in pairs(artist.albums) do
             album.artist = artist
-            table.insert(index.albums, album)
+            tbl.insert(index.albums, album)
 
             for _, track in pairs(album.tracks) do
                 track.album = album
-                table.insert(index.tracks, track)
+                tbl.insert(index.tracks, track)
             end
         end
     end
@@ -143,59 +148,59 @@ local function index_art(index)
 
     for _, album in pairs(index.albums) do
         -- (Hack) Write art to disk from Lua
-        local art_batch = {process_art(album.tracks[1].path, table.unpack(consts.cover_art_sizes))}
+        local art_batch = {engine.process_art(album.tracks[1].path, tbl.unpack(consts.cover_art_sizes))}
 
         for i, art in pairs(art_batch) do
             pd_datastore.writeImage(art, album_art_path .. consts.cover_art_sizes[i] .. "/" .. album.art_uuid .. ".pdi")
         end
 
-        coroutine.yield()
+        coro_yield()
     end
 end
 
 function init_index()
     -- Optimize yielding
-    local normal_refresh_rate = pd_display.getRefreshRate()
-    pd_display.setRefreshRate(0)
+    local normal_refresh_rate = pd.display.getRefreshRate()
+    pd.display.setRefreshRate(0)
 
     -- Get total size of all audio files
-    playdate.resetElapsedTime()
+    logging.reset_time()
     local byte_count = count_bytes()
-    log_time("byte count")
+    logging.log_time("byte count")
 
     -- Attempt to load saved index
-    playdate.resetElapsedTime()
+    logging.reset_time()
     local clean_index = false
     local index = load_saved_index(byte_count)
-    log_time("loading saved index")
+    logging.log_time("loading saved index")
 
     -- Build the index if the returned index is nil, save
     if not index then
         clean_index = true
 
-        playdate.resetElapsedTime()
+        logging.reset_time()
         index = index_files()
-        log_time("building index")
+        logging.log_time("building index")
 
-        playdate.resetElapsedTime()
+        logging.reset_time()
         save_index(index, byte_count)
-        log_time("saving index")
+        logging.log_time("saving index")
     end
 
     -- Add references
-    playdate.resetElapsedTime()
+    logging.reset_time()
     link_index(index)
-    log_time("linking index")
+    logging.log_time("linking index")
 
     -- Process album art if missing or a clean index
     if clean_index or check_art() then
-        playdate.resetElapsedTime()
+        logging.reset_time()
         index_art(index)
-        log_time("processing album art")
+        logging.log_time("processing album art")
     end
 
     -- Reset yielding optimization
-    pd_display.setRefreshRate(normal_refresh_rate)
+    pd.display.setRefreshRate(normal_refresh_rate)
 
     return index
 end

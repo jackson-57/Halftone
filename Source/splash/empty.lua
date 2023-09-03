@@ -1,13 +1,12 @@
-local pd_gfx <const> = playdate.graphics
-local pd_font <const> = pd_gfx.font
-local pd_meta <const> = playdate.metadata
+local pd <const> = playdate
+local pd_gfx <const> = pd.graphics
 
-local display_width <const> = playdate.display.getWidth()
-local display_height <const> = playdate.display.getHeight()
+local display_width <const> = pd.display.getWidth()
+local display_height <const> = pd.display.getHeight()
 local margin <const> = 8
 local spacer <const> = 5
 local splash_header <const> = "*Your library is empty.*"
-local splash_message <const> = "Welcome to " .. pd_meta.name .. "! Let's get you set up.\nTo add tracks to your library, put your Playdate in Data Disk mode, and place .opus files in the Data/" .. pd_meta.bundleID .. "/ directory."
+local splash_message <const> = "Welcome to " .. pd.metadata.name .. "! Let's get you set up.\nTo add tracks to your library, put your Playdate in Data Disk mode, and place .opus files in the Data/" .. pd.metadata.bundleID .. "/ directory."
 local qr_message <const> = "For conversion instructions and a setup guide, please scan the\nQR code, or visit github.com/jackson-57/Halftone/."
 local qr <const> = pd_gfx.image.new("resources/setupguide")
 
@@ -17,7 +16,7 @@ function empty_library_splash()
     local splash_header_x = margin
     local splash_header_y = margin
     local splash_header_width = display_width - margin * 2
-    local splash_header_height = pd_gfx.getSystemFont(pd_font.kVariantBold):getHeight()
+    local splash_header_height = pd_gfx.getSystemFont(pd_gfx.font.kVariantBold):getHeight()
 
     local splash_message_x = margin
     local splash_message_y = splash_header_y + splash_header_height + margin

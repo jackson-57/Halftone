@@ -10,10 +10,10 @@ local panel_padding <const> = 10
 local padded_width <const> = consts.panel_width - (panel_padding * 2)
 local padded_height <const> = consts.display_height - panel_padding - consts.progress_height
 
-class("NowPlaying").extends(pd_gfx.sprite)
+class("NowPlaying", nil, ui.panels).extends(pd_gfx.sprite)
 
-function NowPlaying:init()
-    NowPlaying.super.init(self)
+function ui.panels.NowPlaying:init()
+    ui.panels.NowPlaying.super.init(self)
 
     self:setCenter(0, 0)
     self:setBounds(0, 0, consts.panel_width, consts.display_height)
@@ -29,7 +29,7 @@ local function draw_text(text, height, font)
     return height + select(2, pd_gfx.drawTextInRect(text, 0, height, padded_width, padded_height - height, nil, "...", nil, font))
 end
 
-function NowPlaying:refresh()
+function ui.panels.NowPlaying:refresh()
     if ui.track then
         local height = 0
 
@@ -47,7 +47,7 @@ function NowPlaying:refresh()
     end
 end
 
-function NowPlaying:draw(x, y, width, height)
+function ui.panels.NowPlaying:draw(x, y, width, height)
     -- pd_gfx.setColor(pd_gfx.kColorBlack)
     -- pd_gfx.fillRect(x, y, width, height)
 

@@ -1,31 +1,33 @@
-class("Menu").extends(ListPanel)
+local ui_panels <const> = UI.panels
 
-function Menu:get_row_text(row)
+class("Menu", nil, ui_panels).extends(ui_panels.ListPanel)
+
+function ui_panels.Menu:get_row_text(row)
     return self.menuOptions[row].name
 end
 
-function Menu:init(index)
-    Menu.super.init(self)
+function ui_panels.Menu:init(index)
+    ui_panels.Menu.super.init(self)
     self.index = index
 
     self.menuOptions = {
         {
             name = "albums",
-            select = function () Albums(self.index.albums) end
+            select = function () ui_panels.Albums(self.index.albums) end
         },
         {
             name = "artists",
-            select = function () Artists(self.index.artists) end
+            select = function () ui_panels.Artists(self.index.artists) end
         },
         {
             name = "tracks",
-            select = function () Tracks(self.index.tracks) end
+            select = function () ui_panels.Tracks(self.index.tracks) end
         }
     }
 
     self.listview:setNumberOfRows(#self.menuOptions)
 end
 
-function Menu:select()
+function ui_panels.Menu:select()
     self.menuOptions[self.listview:getSelectedRow()].select()
 end

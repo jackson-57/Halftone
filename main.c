@@ -14,25 +14,21 @@ int eventHandler(PlaydateAPI* playdate, PDSystemEvent event, uint32_t arg)
         case kEventInitLua:
             pd = playdate;
 
-            struct LUA_C_FUNCTION {
-                lua_CFunction function;
-                char* name;
-            };
-            struct LUA_C_FUNCTION LUA_C_FUNCTIONS[] = {
-                {set_playback, "set_playback"},
-                {get_playback_status, "get_playback_status"},
-                {toggle_playback, "toggle_playback"},
-                {seek_playback, "seek_playback"},
-                {parse_metadata, "parse_metadata"},
-                {process_art, "process_art"},
-                {audio_init, "audio_init"},
-                {audio_update, "audio_update"}
+            lua_reg engine_reg[] = {
+                {"set_playback", set_playback},
+                {"get_playback_status", get_playback_status},
+                {"toggle_playback", toggle_playback},
+                {"seek_playback", seek_playback},
+                {"parse_metadata", parse_metadata},
+                {"process_art", process_art},
+                {"audio_init", audio_init},
+                {"audio_update", audio_update},
+                {NULL, NULL}
             };
             const char* err;
-            for (int i = 0; i < 8; ++i)
+            if (!pd->lua->registerClass("Engine", engine_reg, NULL, 1, &err))
             {
-                if ( !pd->lua->addFunction(LUA_C_FUNCTIONS[i].function, LUA_C_FUNCTIONS[i].name, &err) )
-                    pd->system->logToConsole("%s:%i: addFunction failed, %s", __FILE__, __LINE__, err);
+                pd->system->error("registerClass failed: %s", err);
             }
 
             // setup opusfile callbacks
