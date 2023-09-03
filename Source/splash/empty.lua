@@ -1,16 +1,16 @@
-local pd <const> = playdate
-local pd_gfx <const> = pd.graphics
-
-local display_width <const> = pd.display.getWidth()
-local display_height <const> = pd.display.getHeight()
-local margin <const> = 8
-local spacer <const> = 5
-local splash_header <const> = "*Your library is empty.*"
-local splash_message <const> = "Welcome to " .. pd.metadata.name .. "! Let's get you set up.\nTo add tracks to your library, put your Playdate in Data Disk mode, and place .opus files in the Data/" .. pd.metadata.bundleID .. "/ directory."
-local qr_message <const> = "For conversion instructions and a setup guide, please scan the\nQR code, or visit github.com/jackson-57/Halftone/."
-local qr <const> = pd_gfx.image.new("resources/setupguide")
-
 function empty_library_splash()
+    local pd <const> = playdate
+    local pd_gfx <const> = pd.graphics
+
+    local margin <const> = 8
+    local spacer <const> = 5
+    local splash_header <const> = "*Your library is empty.*"
+    local splash_message <const> = "Welcome to " .. pd.metadata.name .. "! Let's get you set up.\nTo add tracks to your library, put your Playdate in Data Disk mode, and place .opus files in the Data/" .. pd.metadata.bundleID .. "/ directory."
+    local qr_message <const> = "For conversion instructions and a setup guide, please scan the\nQR code, or visit github.com/jackson-57/Halftone/."
+    local qr <const> = pd_gfx.image.new("resources/setupguide")
+
+    local display_width <const> = pd.display.getWidth()
+    local display_height <const> = pd.display.getHeight()
     local qr_size = qr:getSize()
 
     local splash_header_x = margin
