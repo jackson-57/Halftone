@@ -7,7 +7,6 @@ local pd_uuid <const> = pd.string.UUID
 local logging <const> = Logging
 local engine <const> = Engine
 local tbl <const> = table
-local string_match <const> = string.match
 local coro_yield <const> = coroutine.yield
 
 local consts <const> = consts
@@ -15,13 +14,15 @@ local consts <const> = consts
 local saved_index_path <const> = consts.app_dir .. "library.idx"
 local album_art_path <const> = consts.app_dir .. "art_cache/"
 local uuid_length <const> = 10
+local unknown_album <const> = "Unknown Album"
+local unknown_artist <const> = "Unknown Artist"
 
 local function scan_files(dir, callback)
     for _, file in pairs(pd_file.listFiles(dir)) do
         if pd_file.isdir(file) then
             scan_files(dir .. file, callback)
-        elseif string_match(file, "[^.]+$") == "opus" then
-            callback(dir .. file)
+        elseif file:match("[^.]+$") == "opus" then
+            callback(dir, file)
         end
     end
 end
@@ -29,9 +30,9 @@ end
 local function count_bytes()
     local total = 0
 
-    scan_files("", function (path)
+    scan_files("", function (dir, file)
 ---@diagnostic disable-next-line: cast-local-type
-        total += pd_file.getSize(path)
+        total += pd_file.getSize(dir .. file)
     end)
 
     return total
@@ -41,9 +42,16 @@ local function index_files()
     local index = {artists={}}
     local named_index = {}
 
-    local cb = function (path)
+    local cb = function (dir, file)
+        local path = dir .. file
         local meta_duration, meta_title, meta_album, meta_artist, meta_album_artist, meta_year, meta_track_number = engine.parse_metadata(path)
         if meta_duration then
+            -- substitute missing required metadata
+            if not meta_title then meta_title = file:match("(.+)%..+") end
+            if not meta_album then meta_album = unknown_album end
+            if not meta_artist then meta_artist = unknown_artist end
+            if not meta_album_artist then meta_album_artist = unknown_artist end
+
             local track = {path=path, title=meta_title, artist=meta_artist, duration = meta_duration}
 
             local artist = nil
