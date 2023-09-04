@@ -26,24 +26,30 @@ function ui.sideviews.DurationSideview:calculate_elapsed()
 end
 
 function ui.sideviews.DurationSideview:draw(x, y, width, height)
-    if not ui.track then return end
-
+    local duration = self.current_duration
     local elapsed = nil
-    local filled_width = nil
-    if self.seek_width then
-        elapsed = self:calculate_elapsed()
-        filled_width = self.seek_width
+    if not duration then
+        duration = 0
+        elapsed = 0
     else
-        elapsed = self.current_elapsed
-        filled_width = self:calculate_width(elapsed)
+        local filled_width = nil
+
+        if self.seek_width then
+            elapsed = self:calculate_elapsed()
+            filled_width = self.seek_width
+        else
+            elapsed = self.current_elapsed
+            filled_width = self:calculate_width(elapsed)
+        end
+
+        pd_gfx.fillRect(x, y, filled_width, height)
+
+        pd_gfx.setImageDrawMode(pd_gfx.kDrawModeNXOR)
     end
 
-    pd_gfx.fillRect(x, y, filled_width, height)
-
-    pd_gfx.setImageDrawMode(pd_gfx.kDrawModeNXOR)
     pd_gfx.font.drawText(font, ui.sec_to_hms(elapsed), x + 2, y + 2)
     -- todo: cache?
-    pd_gfx.font.drawTextAligned(font, ui.sec_to_hms(self.current_duration), width - 2, y + 2, textAlignment.right)
+    pd_gfx.font.drawTextAligned(font, ui.sec_to_hms(duration), width - 2, y + 2, textAlignment.right)
 end
 
 function ui.sideviews.DurationSideview:refresh()

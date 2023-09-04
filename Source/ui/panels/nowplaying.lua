@@ -4,6 +4,7 @@ local normal_font <const> = pd_gfx.getFont()
 local bold_font <const> = pd_gfx.getFont(pd_gfx.font.kVariantBold)
 local consts <const> = ui_consts
 
+local no_track <const> = "Nothing playing yet"
 local text_padding <const> = 5
 local panel_padding <const> = 10
 
@@ -22,6 +23,7 @@ function ui.panels.NowPlaying:init()
     self.canvas = pd_gfx.image.new(padded_width, padded_height)
 
     self:setUpdatesEnabled(false)
+    self:refresh()
     self:add()
 end
 
@@ -30,21 +32,25 @@ local function draw_text(text, height, font)
 end
 
 function ui.panels.NowPlaying:refresh()
+    local height = 0
+
+    pd_gfx.pushContext(self.canvas)
+    pd_gfx.clear()
+
     if ui.track then
-        local height = 0
-
-        pd_gfx.pushContext(self.canvas)
-        pd_gfx.clear()
-
         height = draw_text(ui.track.title, height, bold_font) + text_padding
         height = draw_text(ui.track.album.title, height, normal_font) + text_padding
         height = draw_text(ui.track.artist, height, normal_font)
-
-        pd_gfx.popContext()
-
-        self.rendered_height = height
-        self:markDirty()
+    else
+        -- Draw where title would normally be
+        ---@diagnostic disable-next-line: need-check-nil
+        height = draw_text(no_track, height, bold_font) + (bold_font:getHeight() + text_padding) * 2
     end
+
+    pd_gfx.popContext()
+
+    self.rendered_height = height
+    self:markDirty()
 end
 
 function ui.panels.NowPlaying:draw(x, y, width, height)
