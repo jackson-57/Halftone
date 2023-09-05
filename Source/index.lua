@@ -52,7 +52,7 @@ local function index_files()
             if not meta_artist then meta_artist = unknown_artist end
             if not meta_album_artist then meta_album_artist = unknown_artist end
 
-            local track = {path=path, title=meta_title, artist=meta_artist, duration = meta_duration}
+            local track = {path=path, title=meta_title, artist=meta_artist, duration = meta_duration, number=meta_track_number}
 
             local artist = nil
             local named_artist = named_index[meta_album_artist]
@@ -74,7 +74,6 @@ local function index_files()
                 tbl.insert(artist.albums, album)
             end
 
-            -- tbl.insert(album.tracks, meta_track_number, track)
             tbl.insert(album.tracks, track)
 
             coro_yield()
@@ -84,6 +83,34 @@ local function index_files()
     scan_files("", cb)
 
     return index
+end
+
+local function compare_artist_names(artist_1, artist_2)
+    return artist_1.name < artist_2.name
+end
+
+local function compare_album_titles(album_1, album_2)
+    return album_1.title < album_2.title
+end
+
+local function compare_track_numbers(track_1, track_2)
+    return track_1.number < track_2.number
+end
+
+local function compare_track_titles(track_1, track_2)
+    return track_1.title < track_2.title
+end
+
+local function sort_index(index)
+    tbl.sort(index.artists, compare_artist_names)
+
+    for _, artist in pairs(index.artists) do
+        tbl.sort(artist.albums, compare_album_titles)
+
+        for _, album in pairs(artist.albums) do
+            tbl.sort(album.tracks, compare_track_numbers)
+        end
+    end
 end
 
 local function link_index(index)
@@ -101,6 +128,11 @@ local function link_index(index)
             end
         end
     end
+end
+
+local function sort_index_links(index)
+    tbl.sort(index.albums, compare_album_titles)
+    tbl.sort(index.tracks, compare_track_titles)
 end
 
 local function load_saved_index(byte_count)
@@ -155,6 +187,9 @@ local function index_art(index)
     end
 
     for _, album in pairs(index.albums) do
+        -- Skip indexing art for unknown album
+        if album.title == unknown_album then return end
+
         -- (Hack) Write art to disk from Lua
         local art_batch = {engine.process_art(album.tracks[1].path, tbl.unpack(consts.cover_art_sizes))}
 
@@ -182,7 +217,7 @@ function init_index()
     local index = load_saved_index(byte_count)
     logging.log_time("loading saved index")
 
-    -- Build the index if the returned index is nil, save
+    -- Build the index if the returned index is nil, sort, and save
     if not index then
         clean_index = true
 
@@ -191,14 +226,22 @@ function init_index()
         logging.log_time("building index")
 
         logging.reset_time()
+        sort_index(index)
+        logging.log_time("sorting index")
+
+        logging.reset_time()
         save_index(index, byte_count)
         logging.log_time("saving index")
     end
 
-    -- Add references
+    -- Add references, then sort them
     logging.reset_time()
     link_index(index)
     logging.log_time("linking index")
+
+    logging.reset_time()
+    sort_index_links(index)
+    logging.log_time("sorting index links")
 
     -- Process album art if missing or a clean index
     if clean_index or check_art() then
