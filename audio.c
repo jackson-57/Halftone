@@ -3,7 +3,7 @@
 #include "shared_pd.h"
 #include "shared_opusfile.h"
 #include "shared_audio.h"
-#include <speex/speex_resampler.h>
+#include <speex_resampler.h>
 
 #define OPUS_BUFFER_SIZE 11520
 #define SPEEX_BLOCK_COUNT 32

@@ -1,0 +1,15 @@
+[submodule "lib/ogg"]
+	path = lib/ogg
+	url = https://gitlab.xiph.org/xiph/ogg
+[submodule "lib/opus"]
+	path = lib/opus
+	url = https://gitlab.xiph.org/xiph/opus
+[submodule "lib/opusfile"]
+	path = lib/opusfile
+	url = https://github.com/jackson-57/opusfile
+[submodule "lib/speex_resampler/speexdsp"]
+	path = lib/speex_resampler/speexdsp
+	url = https://gitlab.xiph.org/xiph/speexdsp
+[submodule "lib/stb_image/stb"]
+	path = lib/stb_image/stb
+	url = https://github.com/nothings/stb
