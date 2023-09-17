@@ -1,7 +1,13 @@
+local pd <const> = playdate
+
 -- global tables
 UI = {}
 Logging = {}
 Playback = {}
+
+-- font override
+pd.graphics.setFont(pd.graphics.font.new("resources/Asheville Ayu"))
+pd.graphics.setFont(pd.graphics.font.new("resources/Asheville Ayu Bold"), pd.graphics.font.kVariantBold)
 
 -- imports
 import "logging"
@@ -13,7 +19,6 @@ import "playback"
 import "ui/ui"
 
 -- consts
-local pd <const> = playdate
 local pd_updatetimers <const> = pd.timer.updateTimers
 local ui <const> = UI
 local logging <const> = Logging
