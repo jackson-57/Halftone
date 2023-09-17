@@ -12,7 +12,7 @@ int parse_metadata(lua_State* L)
     const char* path = pd->lua->getArgString(1);
 
     // Open file
-    SDFile *file = pd->file->open(path, kFileReadData);
+    SDFile *file = pd->file->open(path, kFileRead|kFileReadData);
     if (file == NULL)
     {
         pd->system->error("Could not open file (%s)", path);
@@ -74,7 +74,7 @@ int process_art(lua_State *L)
     const char* path = pd->lua->getArgString(1);
 
     // Open file
-    SDFile *file = pd->file->open(path, kFileReadData);
+    SDFile *file = pd->file->open(path, kFileRead|kFileReadData);
     if (file == NULL)
     {
         pd->system->error("Could not open file (%s)", path);

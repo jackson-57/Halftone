@@ -18,7 +18,7 @@ int set_playback(lua_State* L)
     }
 
     // Open file
-    SDFile *file = pd->file->open(path, kFileReadData);
+    SDFile *file = pd->file->open(path, kFileRead|kFileReadData);
     if (file == NULL)
     {
         pd->system->error("Could not open file.");
