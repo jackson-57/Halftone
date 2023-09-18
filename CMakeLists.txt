@@ -57,7 +57,7 @@ add_subdirectory(lib/opusfile)
 add_subdirectory(lib/speex_resampler)
 add_subdirectory(lib/stb_image)
 
-target_compile_definitions(speex_resampler PUBLIC OUTSIDE_SPEEX RANDOM_PREFIX=halftone PRIVATE FLOATING_POINT)
+target_compile_definitions(speex_resampler PRIVATE FLOATING_POINT)
 target_compile_definitions(stb_image PUBLIC STBI_NO_STDIO STBI_ONLY_JPEG STBI_ONLY_PNG STBI_ONLY_GIF)
 
 if (TOOLCHAIN STREQUAL "armgcc")

@@ -5,4 +5,8 @@ set(CMAKE_C_STANDARD 11)
 
 add_library(speex_resampler speexdsp/libspeexdsp/resample.c)
 
-target_include_directories(speex_resampler PUBLIC include)
+# define EXPORT macro as nothing
+target_compile_definitions(speex_resampler PRIVATE EXPORT=)
+
+# publicly include speex headers in the root includes, while privately including as 'speex/' for resample.c
+target_include_directories(speex_resampler PUBLIC include/speex PRIVATE include)
