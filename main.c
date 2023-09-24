@@ -7,6 +7,7 @@
 PlaydateAPI* pd;
 OpusFileCallbacks op_callbacks = {NULL};
 
+__declspec(dllexport)
 int eventHandler(PlaydateAPI* playdate, PDSystemEvent event, uint32_t arg)
 {
     switch (event)

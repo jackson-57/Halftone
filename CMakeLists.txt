@@ -43,6 +43,10 @@ else()
 	# reimplements malloc, free, calloc, etc. with the Playdate API realloc to enable Malloc Log integration
 	# only works on macOS, see https://devforum.play.date/t/c-api-why-isnt-setup-c-included-in-simulator-builds/12680/2
 #	target_sources(${PLAYDATE_GAME_NAME} PRIVATE ${SDK}/C_API/buildsupport/setup.c buildsupport/calloc.c)
+
+	if (MSVC)
+		target_compile_options(${PLAYDATE_GAME_NAME} PRIVATE "/experimental:c11atomics")
+	endif()
 endif()
 
 
