@@ -136,12 +136,19 @@ int audio_update(lua_State* L)
             uint32_t in_len = opus_buffer->count / 2;
             int16_t *out = block->buf + total;
             uint32_t out_len = (AUDIO_FRAMES_PER_CYCLE - total) / 2;
-            if (in_len < out_len)
+            speex_resampler_process_interleaved_int(speex_state, in, &in_len, out, &out_len);
+
+            if (in_len > 0)
             {
-                out_len = in_len;
+                opus_buffer->count -= (int)in_len * 2;
+                opus_buffer->pos += (int)in_len * 2;
             }
-            memcpy(out, in, out_len * 2 * sizeof(int16_t));
-            in_len = out_len;
+
+            if (out_len > 0)
+            {
+
+                total += (int)out_len * 2;
+            }
         }
         while (total < AUDIO_FRAMES_PER_CYCLE);
 
