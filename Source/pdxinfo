@@ -1,6 +1,6 @@
-name=Halftone Alpha
+name=Halftone Debug
 author=Jackson_57
 description=A lightweight, capable music player for the Playdate
 bundleID=dev.jackson57.halftone
-version=0.1
-buildNumber=1
+version=0.9
+buildNumber=9

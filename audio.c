@@ -5,9 +5,11 @@
 #include "shared_audio.h"
 #include <speex_resampler.h>
 
-#define OPUS_BUFFER_SIZE 11520
+//#define OPUS_BUFFER_SIZE 11520
+#define OPUS_BUFFER_SIZE 1024
 #define SPEEX_BLOCK_COUNT 32
-#define SPEEX_QUALITY 5
+//#define SPEEX_QUALITY 5
+#define SPEEX_QUALITY 0
 
 // Simple buffer struct
 typedef struct {
@@ -134,19 +136,12 @@ int audio_update(lua_State* L)
             uint32_t in_len = opus_buffer->count / 2;
             int16_t *out = block->buf + total;
             uint32_t out_len = (AUDIO_FRAMES_PER_CYCLE - total) / 2;
-            speex_resampler_process_interleaved_int(speex_state, in, &in_len, out, &out_len);
-
-            if (in_len > 0)
+            if (in_len < out_len)
             {
-                opus_buffer->count -= (int)in_len * 2;
-                opus_buffer->pos += (int)in_len * 2;
+                out_len = in_len;
             }
-
-            if (out_len > 0)
-            {
-
-                total += (int)out_len * 2;
-            }
+            memcpy(out, in, out_len * 2 * sizeof(int16_t));
+            in_len = out_len;
         }
         while (total < AUDIO_FRAMES_PER_CYCLE);
 
