@@ -48,6 +48,7 @@ endif()
 
 include(buildsupport/playdate_game.cmake)
 
+set(CMAKE_POLICY_DEFAULT_CMP0076 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
 set(OP_DISABLE_HTTP ON)
@@ -82,6 +83,10 @@ if (TOOLCHAIN STREQUAL "armgcc")
 
 		target_compile_options(${LOOP_TARGET} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-fno-exceptions>)
 	endforeach()
+
+	target_compile_definitions(opus PUBLIC OPUS_ARM_ASM OPUS_ARM_INLINE_ASM OPUS_ARM_INLINE_EDSP OPUS_ARM_INLINE_MEDIA OPUS_ARM_MAY_HAVE_EDSP OPUS_ARM_MAY_HAVE_MEDIA OPUS_ARM_PRESUME_EDSP OPUS_ARM_PRESUME_MEDIA)
+	add_sources_group(opus celt celt_pitch_xcorr_arm-gnu.S)
+	target_compile_options(opus PUBLIC -Wa,-mimplicit-it=thumb)
 
 	target_link_libraries(${PLAYDATE_GAME_DEVICE} opusfile speex_resampler stb_image)
 else()
