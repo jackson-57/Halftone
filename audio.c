@@ -5,8 +5,7 @@
 #include "shared_audio.h"
 #include <speex_resampler.h>
 
-//#define OPUS_BUFFER_SIZE 11520
-#define OPUS_BUFFER_SIZE 1024
+#define OPUS_BUFFER_SIZE 11520
 #define SPEEX_BLOCK_COUNT 32
 //#define SPEEX_QUALITY 5
 #define SPEEX_QUALITY 0
