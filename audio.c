@@ -47,7 +47,7 @@ typedef struct
 SpeexResamplerState *speex_state = NULL;
 CircularBuffer *speex_buffer = NULL;
 SimpleBuffer *opus_buffer = NULL;
-PlaybackState playback_state = {0, NULL, NULL};
+PlaybackState playback_state = {0, NULL, NULL, NULL};
 
 int audio_update(lua_State* L)
 {
@@ -125,6 +125,8 @@ int audio_update(lua_State* L)
                     pd->system->error("Opus error while decoding: %c", samples);
                     op_free(playback_state.opus_file);
                     playback_state.opus_file = NULL;
+                    pd->system->realloc(playback_state.mem_file, 0);
+                    playback_state.mem_file = NULL;
                     pd->sound->removeSource(playback_state.sound_source);
                     return 0;
                 }
@@ -277,6 +279,12 @@ void audio_terminate(void)
     {
         op_free(playback_state.opus_file);
         playback_state.opus_file = NULL;
+    }
+
+    if (playback_state.mem_file != NULL)
+    {
+        pd->system->realloc(playback_state.mem_file, 0);
+        playback_state.mem_file = NULL;
     }
 
     if (playback_state.sound_source != NULL)
