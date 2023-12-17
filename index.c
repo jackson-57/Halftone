@@ -10,7 +10,6 @@
 int parse_metadata(lua_State* L)
 {
     const char* path = pd->lua->getArgString(1);
-    debug_file("DEBUG: got path\n");
 
     // Open file
     SDFile *file = pd->file->open(path, kFileRead|kFileReadData);
@@ -19,7 +18,6 @@ int parse_metadata(lua_State* L)
         pd->system->error("Could not open file (%s)", path);
         return 0;
     }
-    debug_file("DEBUG: opened SD file\n");
     int err;
     OggOpusFile* opus_file = op_open_callbacks(file, &op_callbacks, NULL, 0, &err);
     if (err != 0)
@@ -28,12 +26,10 @@ int parse_metadata(lua_State* L)
         pd->file->close(file);
         return 0;
     }
-    debug_file("DEBUG: opened OpusFile\n");
 
     // Index
     int stack_count = 0;
     ogg_int64_t samples = op_pcm_total(opus_file, -1);
-    debug_file("DEBUG: got total samples\n");
     if (samples > 0)
     {
         // duration
@@ -44,7 +40,6 @@ int parse_metadata(lua_State* L)
         // treat non-seekable files as zero seconds long
         pd->lua->pushInt(0);
     }
-    debug_file("DEBUG: pushed samples to stack\n");
     stack_count++;
 
     const OpusTags* opus_tags = op_tags(opus_file, -1);
@@ -53,14 +48,12 @@ int parse_metadata(lua_State* L)
         op_free(opus_file);
         return stack_count;
     }
-    debug_file("DEBUG: got OpusTags\n");
 
     // More indexing
     const char* OPUS_TAGS_LIST[] = {"TITLE", "ALBUM", "ARTIST", "ALBUMARTIST", "DATE", "TRACKNUMBER"};
     for (int i = 0; i < 6; ++i)
     {
         const char *tag_value = opus_tags_query(opus_tags, OPUS_TAGS_LIST[i], 0);
-        debug_file("DEBUG: queried tag\n");
         if (tag_value == NULL)
         {
             pd->lua->pushNil();
@@ -70,11 +63,9 @@ int parse_metadata(lua_State* L)
             pd->lua->pushString(tag_value);
         }
         stack_count++;
-        debug_file("DEBUG: pushed tag\n");
     }
 
     op_free(opus_file);
-    debug_file("DEBUG: freed OpusFile\n");
     return stack_count;
 }
 

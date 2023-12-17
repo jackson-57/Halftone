@@ -57,16 +57,3 @@ int eventHandler(PlaydateAPI* playdate, PDSystemEvent event, uint32_t arg)
 
     return 0;
 }
-
-void debug_file(char *msg)
-{
-    pd->system->logToConsole(msg);
-
-    SDFile *file = pd->file->open("log.txt", kFileAppend);
-    if (file)
-    {
-        pd->file->write(file, msg, strlen(msg));
-        pd->file->flush(file);
-        pd->file->close(file);
-    }
-}
