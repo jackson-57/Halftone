@@ -7,6 +7,16 @@
 PlaydateAPI* pd;
 OpusFileCallbacks op_callbacks = {NULL};
 
+int seek_64(void *_stream, opus_int64 _offset, int _whence)
+{
+    return pd->file->seek(_stream, (int)_offset, _whence);
+};
+
+opus_int64 tell_64(void *_stream)
+{
+    return pd->file->tell(_stream);
+};
+
 int eventHandler(PlaydateAPI* playdate, PDSystemEvent event, uint32_t arg)
 {
     switch (event)
@@ -33,8 +43,8 @@ int eventHandler(PlaydateAPI* playdate, PDSystemEvent event, uint32_t arg)
 
             // setup opusfile callbacks
             op_callbacks.read = (op_read_func) pd->file->read;
-            op_callbacks.seek = (op_seek_func) pd->file->seek;
-            op_callbacks.tell = (op_tell_func) pd->file->tell;
+            op_callbacks.seek = seek_64;
+            op_callbacks.tell = tell_64;
             op_callbacks.close = pd->file->close;
             break;
         case kEventTerminate:
